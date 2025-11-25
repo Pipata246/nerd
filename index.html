@@ -12,6 +12,182 @@
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
   <link rel="stylesheet" href="styles.css">
+  <style>
+    /* Help Button Styles */
+    .help-button {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: var(--accent);
+      color: white;
+      border: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 1000;
+      box-shadow: 0 4px 15px rgba(124, 77, 255, 0.3);
+      transition: all 0.3s ease;
+    }
+
+    .help-button:hover {
+      transform: scale(1.1);
+      background: #8c6bff;
+      box-shadow: 0 6px 20px rgba(124, 77, 255, 0.4);
+    }
+
+    /* Help Panel Styles */
+    .help-panel {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(0.9);
+      width: 90%;
+      max-width: 600px;
+      max-height: 80vh;
+      background: linear-gradient(135deg, #1a1540 0%, #0f0c2e 100%);
+      border-radius: 16px;
+      padding: 0;
+      z-index: 1001;
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+      overflow: hidden;
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+      filter: none;
+    }
+
+    .help-panel.active {
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(1);
+      pointer-events: auto;
+    }
+
+    .help-header {
+      background: linear-gradient(90deg, var(--accent) 0%, #9c7bff 100%);
+      padding: 16px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: white;
+    }
+
+    .help-header h2 {
+      margin: 0;
+      font-size: 1.5rem;
+      font-weight: 700;
+    }
+
+    .close-help {
+      background: none;
+      border: none;
+      color: white;
+      font-size: 28px;
+      cursor: pointer;
+      line-height: 1;
+      padding: 0 8px;
+      border-radius: 4px;
+      transition: background-color 0.2s;
+    }
+
+    .close-help:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    .help-content {
+      padding: 20px;
+      overflow-y: auto;
+      max-height: calc(80vh - 70px);
+    }
+
+    .help-section {
+      margin-bottom: 24px;
+      background: rgba(255, 255, 255, 0.03);
+      border-radius: 12px;
+      padding: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .help-section h3 {
+      color: var(--gold);
+      margin-top: 0;
+      margin-bottom: 12px;
+      font-size: 1.2rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      padding-bottom: 8px;
+    }
+
+    .help-section p {
+      margin: 8px 0;
+      line-height: 1.5;
+      color: #e0e0e0;
+    }
+
+    .help-section p strong {
+      color: var(--gold);
+    }
+
+    /* Overlay without blur */
+    .help-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 1000;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+
+    /* Help Panel - no blur */
+    .help-panel {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(0.9);
+      width: 90%;
+      max-width: 600px;
+      max-height: 80vh;
+      background: linear-gradient(135deg, #1a1540 0%, #0f0c2e 100%);
+      border-radius: 16px;
+      padding: 0;
+      z-index: 1001;
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+      overflow: hidden;
+    }
+
+    .help-overlay.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    @media (max-width: 768px) {
+      .help-panel {
+        width: 95%;
+        max-height: 85vh;
+      }
+      
+      .help-content {
+        padding: 15px;
+      }
+      
+      .help-section {
+        padding: 12px;
+      }
+    }
+  </style>
 </head>
 <body>
 
@@ -48,6 +224,43 @@
   </aside>
 
   <!-- Main card -->
+  <!-- Help Button -->
+  <button id="help-button" class="help-button" aria-label="Help and Information">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="10"></circle>
+      <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+      <line x1="12" y1="17" x2="12.01" y2="17"></line>
+    </svg>
+  </button>
+
+  <!-- Help Panel -->
+  <div id="help-panel" class="help-panel">
+    <div class="help-header">
+      <h2>Помощь и информация</h2>
+      <button id="close-help" class="close-help" aria-label="Close help">×</button>
+    </div>
+    <div class="help-content">
+      <div class="help-section">
+        <h3>Как играть</h3>
+        <p>1. Установите ставку с помощью кнопок + и -</p>
+        <p>2. Нажмите SPIN или кнопку в центре для вращения</p>
+        <p>3. Выигрыши начисляются за совпадения 3+ символов на линиях</p>
+      </div>
+      <div class="help-section">
+        <h3>Особые символы</h3>
+        <p>🎁 <strong>Wild</strong> - заменяет любые символы</p>
+        <p>🎰 <strong>Scatter</strong> - даёт бесплатные спины</p>
+        <p>💎 <strong>Bonus</strong> - запускает бонусную игру</p>
+      </div>
+      <div class="help-section">
+        <h3>Бонусный раунд</h3>
+        <p>• Активируется при сборе 3+ бонусных символов</p>
+        <p>• Даёт 10 бесплатных спинов с множителем x3</p>
+        <p>• Можно докупить дополнительные спины</p>
+      </div>
+    </div>
+  </div>
+
   <main class="card" role="main">
     <div class="header">
       <div>
@@ -183,5 +396,35 @@
 </div>
 
 <script src="slot-bonus.js"></script>
+<script>
+  // Help Panel Toggle
+  const helpButton = document.getElementById('help-button');
+  const helpPanel = document.getElementById('help-panel');
+  const closeHelp = document.getElementById('close-help');
+  
+  // Create overlay
+  const overlay = document.createElement('div');
+  overlay.className = 'help-overlay';
+  document.body.appendChild(overlay);
+  
+  // Toggle help panel
+  function toggleHelp() {
+    helpPanel.classList.toggle('active');
+    overlay.classList.toggle('active');
+    document.body.style.overflow = helpPanel.classList.contains('active') ? 'hidden' : '';
+  }
+  
+  // Event listeners
+  helpButton.addEventListener('click', toggleHelp);
+  closeHelp.addEventListener('click', toggleHelp);
+  overlay.addEventListener('click', toggleHelp);
+  
+  // Close on Escape key
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && helpPanel.classList.contains('active')) {
+      toggleHelp();
+    }
+  });
+</script>
 </body>
 </html>
