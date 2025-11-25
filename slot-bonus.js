@@ -1083,6 +1083,7 @@ function launchConfetti(count=50){
 	}
 
 	function buyBonus() {
+		const buyBonusBtn = document.getElementById('buy-bonus');
 		const bet = Number(betInput.value);
 		const cost = bet * 100;
     
@@ -1091,7 +1092,13 @@ function launchConfetti(count=50){
 			return;
 		}
     
+		// Disable button immediately to prevent multiple clicks
+		if (buyBonusBtn) {
+			buyBonusBtn.disabled = true;
+		}
+    
 		state.balance -= cost;
+		state.inBonusMode = true; // Set bonus mode immediately
 		refreshUI();
     
 		playBonusSound();
