@@ -1,0 +1,3125 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Дымоход</title>
+
+  <!-- Prototype for demo; not for real-money gambling -->
+  <!-- Fonts: Montserrat for all text -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      --bg-deep:#0b0820;
+      --bg-surface:linear-gradient(180deg,#3b2b6f 0%, #24183f 60%);
+      --gold:#ffd36b;
+      --accent:#7c4dff;
+      --card:#111021;
+      --glass: rgba(255,255,255,0.04);
+      --muted:#9aa0b4;
+      --success:#8ef58e;
+      --danger:#ff6b6b;
+      --max-width:1100px;
+      --symbol-h: 80px; /* увеличил размер символов */
+      --symbol-gap: 10px; /* увеличил отступы */
+      --rows: 5;
+    }
+    /* Mobile-first reset */
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;font-family:'Montserrat',system-ui,-apple-system,Segoe UI,Roboto,'Helvetica Neue',Arial;background:linear-gradient(135deg, #0b0820 0%, #1a1642 25%, #2d1b69 40%, #1a1642 60%, #0f0c29 80%, #0b0820 100%);background-size: cover;background-position: center;background-attachment: fixed;color:#e6e9f2;display:flex;align-items:center;justify-content:center;padding:0;min-height:100vh;overflow-x:hidden}
+    /* Animated smoke background */
+    body::before{
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: 
+        radial-gradient(ellipse 800px 400px at 20% 30%, rgba(150, 100, 255, 0.4) 0%, transparent 70%),
+        radial-gradient(ellipse 600px 300px at 80% 70%, rgba(200, 150, 255, 0.3) 0%, transparent 70%),
+        radial-gradient(ellipse 1000px 500px at 50% 50%, rgba(255, 200, 255, 0.2) 0%, transparent 70%),
+        radial-gradient(circle 400px at 30% 20%, rgba(180, 130, 255, 0.3) 0%, transparent 60%),
+        radial-gradient(circle 300px at 70% 80%, rgba(220, 180, 255, 0.2) 0%, transparent 60%);
+      animation: smokeFloat1 15s ease-in-out infinite;
+      z-index: 10;
+      pointer-events: none;
+      filter: blur(3px);
+    }
+    
+    body::after{
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: 
+        radial-gradient(ellipse 900px 450px at 30% 80%, rgba(180, 130, 255, 0.3) 0%, transparent 70%),
+        radial-gradient(ellipse 700px 350px at 70% 20%, rgba(220, 180, 255, 0.25) 0%, transparent 70%),
+        radial-gradient(circle 500px at 15% 60%, rgba(150, 100, 255, 0.2) 0%, transparent 60%),
+        radial-gradient(circle 350px at 85% 40%, rgba(200, 150, 255, 0.15) 0%, transparent 60%);
+      animation: smokeFloat2 20s ease-in-out infinite;
+      z-index: 11;
+      pointer-events: none;
+      filter: blur(4px);
+    }
+    
+    /* Animated gradient background */
+    body {
+      animation: gradientShift 20s ease infinite;
+    }
+    
+    @keyframes gradientShift {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+    
+    @keyframes smokeFloat1 {
+      0% {
+        transform: translate(0, 0) scale(1) rotate(0deg);
+        opacity: 0.3;
+      }
+      25% {
+        transform: translate(100px, -60px) scale(1.1) rotate(90deg);
+        opacity: 0.5;
+      }
+      50% {
+        transform: translate(-80px, 80px) scale(0.9) rotate(180deg);
+        opacity: 0.4;
+      }
+      75% {
+        transform: translate(-120px, -40px) scale(1.05) rotate(270deg);
+        opacity: 0.6;
+      }
+      100% {
+        transform: translate(0, 0) scale(1) rotate(360deg);
+        opacity: 0.3;
+      }
+    }
+    
+    @keyframes smokeFloat2 {
+      0% {
+        transform: translate(0, 0) scale(1.1) rotate(0deg);
+        opacity: 0.25;
+      }
+      25% {
+        transform: translate(-90px, 70px) scale(1.2) rotate(-90deg);
+        opacity: 0.4;
+      }
+      50% {
+        transform: translate(70px, -50px) scale(0.95) rotate(-180deg);
+        opacity: 0.35;
+      }
+      75% {
+        transform: translate(-50px, -90px) scale(1.15) rotate(-270deg);
+        opacity: 0.45;
+      }
+      100% {
+        transform: translate(0, 0) scale(1.1) rotate(-360deg);
+        opacity: 0.25;
+      }
+    }
+    .stage{width:100%;max-width:1400px;display:grid;grid-template-columns:1fr;gap:18px;align-items:start;z-index:20;position:relative;padding:20px;box-sizing:border-box}
+    /* Layout for larger screens */
+    @media(min-width:1200px){
+      .stage{grid-template-columns:280px 1fr 280px;align-items:center}
+    }
+    @media(min-width:1000px) and (max-width:1199px){
+      .stage{grid-template-columns:240px 1fr 240px;align-items:center}
+    }
+    @media(min-width:768px) and (max-width:999px){
+      .stage{grid-template-columns:200px 1fr 200px;align-items:center}
+    }
+
+    /* Side panels */
+    .side {
+      background: linear-gradient(145deg, rgba(15,12,41,0.95), rgba(26,22,66,0.9));
+      border-radius:24px;padding:24px;border:1px solid rgba(150,100,255,0.3);
+      box-shadow:0 20px 60px rgba(0,0,0,0.6), 0 0 40px rgba(150,100,255,0.2), inset 0 1px 0 rgba(255,255,255,0.1);
+      min-height:220px;
+      backdrop-filter: blur(20px);
+      position:relative;
+      overflow:hidden;
+    }
+    
+    .side::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(150,100,255,0.1), transparent);
+      animation: shimmer 4s ease-in-out infinite;
+    }
+    
+    @keyframes shimmer {
+      0% { left: -100%; }
+      50% { left: 100%; }
+      100% { left: 100%; }
+    }
+    .brand{
+      font-family:'Montserrat', sans-serif;
+      font-weight:800;color:var(--gold);font-size:32px;text-align:center;margin-bottom:12px;letter-spacing:1px;
+      text-shadow:0 8px 25px rgba(255,215,0,0.3), 0 0 30px rgba(255,215,0,0.2);
+      background: linear-gradient(135deg, #ffd36b, #ffed4e, #ffd36b);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      position:relative;
+    }
+    
+    .brand::after {
+      content: '';
+      position: absolute;
+      bottom: -5px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 60%;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, rgba(255,215,0,0.5), transparent);
+      border-radius: 2px;
+    }
+    .balance {text-align:center;margin-top:8px}
+    .balance .amount {font-size:32px;font-weight:800;color:var(--gold);text-shadow:0 0 16px rgba(255,215,0,0.08)}
+    .panel-row{display:flex;justify-content:space-between;align-items:center;margin-top:12px;color:var(--muted);font-size:13px}
+    .small {font-family:'Montserrat', sans-serif;font-size:12px;color:var(--muted)}
+    .stat {font-family:'Montserrat', sans-serif;font-weight:700;color:#fff}
+
+    /* Main card */
+    .card {
+      background: linear-gradient(145deg, rgba(15,12,41,0.95), rgba(26,22,66,0.9));
+      border-radius:28px;padding:24px;border:1px solid rgba(150,100,255,0.3);
+      box-shadow:0 30px 80px rgba(0,0,0,0.7), 0 0 50px rgba(150,100,255,0.3), inset 0 1px 0 rgba(255,255,255,0.1);
+      position:relative;overflow:hidden;
+      max-width: 100%;
+      margin: 0 auto;
+      backdrop-filter: blur(20px);
+    }
+    
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(150,100,255,0.05), transparent);
+      animation: cardShimmer 5s ease-in-out infinite;
+    }
+    
+    @keyframes cardShimmer {
+      0% { left: -100%; }
+      50% { left: 100%; }
+      100% { left: 100%; }
+    }
+    /* Decorative columns removed */
+    .header {display:flex;align-items:center;justify-content:space-between;gap:12px}
+    .title {font-family:'Montserrat', sans-serif;font-size:34px;color:var(--gold);text-shadow:0 8px 25px rgba(255,215,0,0.3), 0 0 30px rgba(255,215,0,0.2);font-weight:800;letter-spacing:1px;background: linear-gradient(135deg, #ffd36b, #ffed4e, #ffd36b);-webkit-background-clip: text;-webkit-text-fill-color: transparent;background-clip: text;position:relative}
+    .subtitle {font-family:'Montserrat', sans-serif;color:var(--muted);font-size:13px}
+    
+    /* Responsive header */
+    @media(max-width:1200px){
+      .title{font-size:28px}
+      .subtitle{font-size:12px}
+    }
+    @media(max-width:1000px){
+      .title{font-size:26px}
+      .subtitle{font-size:11px}
+      .header{flex-wrap:wrap;gap:8px}
+    }
+
+    /* Reels grid with enhanced masking */
+    .reels-wrap{display:flex;justify-content:center;padding:20px 10px;position:relative}
+    .reels {display:flex;gap:16px;align-items:center;justify-content:center;max-width:100%;overflow:hidden;position:relative}
+    .reels{position:relative}
+    /* Remove masking container */
+    .reel {
+      width:90px;
+      /* Height equals exactly rows * (symbol height + vertical gap) so 5 symbols fit precisely */
+      height: calc(var(--rows) * (var(--symbol-h) + var(--symbol-gap)));
+      background: linear-gradient(145deg, rgba(15,12,41,0.9), rgba(26,22,66,0.8));
+      border-radius:20px;
+      margin:0 8px;
+      box-shadow:inset 0 4px 30px rgba(0,0,0,0.5),0 10px 40px rgba(0,0,0,0.6), 0 0 30px rgba(150,100,255,0.3), inset 0 1px 0 rgba(255,255,255,0.1);
+      border:1px solid rgba(150,100,255,0.4);
+      position:relative;
+      overflow:hidden;
+      flex-shrink: 0;
+      isolation: isolate; /* Create stacking context to contain box-shadows and effects */
+      /* Ensure exactly 5 visible cells with proper masking */
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      /* Ensure reel stays above the masking overlay */
+      z-index: 2;
+      backdrop-filter: blur(10px);
+    }
+    
+    .reel::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(150,100,255,0.2), transparent);
+      animation: reelShimmer 3s ease-in-out infinite;
+    }
+    
+    @keyframes reelShimmer {
+      0% { left: -100%; }
+      50% { left: 100%; }
+      100% { left: 100%; }
+    }
+    
+    /* Responsive reels */
+    @media(max-width:1200px){
+      .reel{width:70px}
+      :root{ --symbol-h:56px }
+      .symbol{font-size:26px}
+    }
+    @media(max-width:1000px){
+      .reel{width:68px}
+      :root{ --symbol-h:52px }
+      .symbol{font-size:24px}
+    }
+    .strip{
+      display:flex;
+      flex-direction:column;
+      position:absolute;
+      top:0;
+      left:0;
+      width:100%;
+      transition:transform 0.6s cubic-bezier(.25,.46,.45,.94);
+      will-change: transform;
+      /* Ensure strip stays within reel bounds */
+      box-sizing: border-box;
+    }
+    
+    /* Balanced speed casino animation */
+    .strip.spinning {
+      animation: smoothSpin 0.15s linear infinite;
+      filter: blur(0.8px);
+      opacity: 0.9;
+    }
+    
+    .strip.decelerating {
+      animation: smoothDecelerate 1.2s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+      filter: blur(0px);
+      opacity: 1;
+    }
+    
+    .strip.stopping {
+      animation: gentleStop 0.4s ease-out forwards;
+      filter: blur(0px);
+      opacity: 1;
+    }
+    
+    @keyframes smoothSpin {
+      0% { transform: translateY(0); }
+      100% { transform: translateY(-90px); } /* Exactly one symbol height + gap */
+    }
+    
+    @keyframes smoothDecelerate {
+      0% { 
+        transform: translateY(0);
+        filter: blur(0.8px);
+        opacity: 0.9;
+      }
+      100% { 
+        transform: translateY(-450px); /* Smooth deceleration */
+        filter: blur(0px);
+        opacity: 1;
+      }
+    }
+    
+    @keyframes gentleStop {
+      0% { 
+        transform: translateY(var(--target-position, 0));
+        opacity: 0.95;
+      }
+      100% { 
+        transform: translateY(var(--target-position, 0));
+        opacity: 1;
+      }
+    }
+    .symbol{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      height: var(--symbol-h);
+      font-size:32px;
+      font-weight:700;
+      font-family:'Montserrat', sans-serif;
+      background: linear-gradient(145deg, rgba(20,15,45,0.8), rgba(30,25,60,0.7));
+      margin: calc(var(--symbol-gap) / 2);
+      border-radius:16px;
+      position:relative;
+      overflow:hidden;
+      transition:transform 200ms, box-shadow 200ms, filter 200ms;
+      user-select:none;
+      box-shadow:inset 0 2px 15px rgba(0,0,0,0.4), 0 0 20px rgba(150,100,255,0.1);
+      border:1px solid rgba(150,100,255,0.2);
+      /* Ensure symbol doesn't exceed its container */
+      max-width: 100%;
+      box-sizing: border-box;
+    }
+    
+    .symbol:hover {
+      transform: scale(1.05);
+      box-shadow:inset 0 2px 15px rgba(0,0,0,0.4), 0 0 30px rgba(150,100,255,0.3);
+    }
+    .symbol.trident-img {
+      background-image: url('img/kalik11.jpg');
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: center;
+      background-color: rgba(255,255,255,0.05);
+      font-size: 0; /* Скрываем текст символа */
+    }
+    
+    .symbol.shield-img {
+      background-image: url('img/ugli11.jpg');
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: center;
+      background-color: rgba(255,255,255,0.05);
+      font-size: 0; /* Скрываем текст символа */
+    }
+
+    .symbol.lightning-img {
+      background-image: url('img/trava.jpg');
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: center;
+      background-color: rgba(255,255,255,0.03);
+      font-size: 0; /* Скрываем текст символа */
+    }
+
+    .symbol.coin-img {
+      background-image: url('img/par.jpg');
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: center;
+      background-color: rgba(255,255,255,0.03);
+      font-size: 0; /* Скрываем текст символа */
+    }
+
+    .symbol.laurel-img {
+      background-image: url('img/veip.jpg');
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: center;
+      background-color: rgba(255,255,255,0.03);
+      font-size: 0; /* Скрываем текст символа */
+    }
+
+    .symbol.wild-img {
+      background-image: url('img/wild.jpg');
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: center;
+      background-color: rgba(255,255,255,0.03);
+      font-size: 0; /* Скрываем текст символа */
+    }
+
+    .symbol.scatter-img {
+      background-image: url('img/bonus.jpg');
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: center;
+      background-color: rgba(255,255,255,0.03);
+      font-size: 0; /* Скрываем текст символа */
+    }
+
+    .symbol.trophy-img {
+      background-image: url('img/kaif.jpg');
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: center;
+      background-color: rgba(255,255,255,0.03);
+      font-size: 0; /* Скрываем текст символа */
+    }
+
+    .symbol.sword-img {
+      background-image: url('img/crack.jpg');
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: center;
+      background-color: rgba(255,255,255,0.03);
+      font-size: 0; /* Скрываем текст символа */
+    }
+
+    .symbol.glock-img {
+      background-image: url('img/glock.jpg');
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: center;
+      background-color: rgba(255,255,255,0.03);
+      font-size: 0; /* Скрываем текст символа */
+    }
+
+    .symbol.eagle-img {
+      background-image: url('img/sigi.jpg');
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: center;
+      background-color: rgba(255,255,255,0.03);
+      font-size: 0; /* Скрываем текст символа */
+    }
+
+    .symbol.temple-img {
+      background-image: url('img/pivo.jpg');
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: center;
+      background-color: rgba(255,255,255,0.03);
+      font-size: 0; /* Скрываем текст символа */
+    }
+    
+    .symbol.win {
+      animation:winGlow 900ms ease-in-out infinite;
+      transform:scale(1.05);
+      filter:brightness(1.05) saturate(1.1) drop-shadow(0 0 20px rgba(255,200,60,0.8)) drop-shadow(0 4px 16px rgba(0,0,0,0.6));
+    }
+    .symbol.expanded-wild {
+      background-image: url('img/wild.jpg');
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: center;
+      background-color: rgba(255,255,255,0.02);
+      font-size: 0; /* hide emoji text */
+      filter: drop-shadow(0 0 30px rgba(255, 215, 0, 0.8)) drop-shadow(0 6px 30px rgba(255, 165, 0, 0.5));
+      animation: expandedWildGlow 1.5s ease-in-out infinite;
+    }
+    .wild-multiplier {
+      position: absolute;
+      top: 2px;
+      right: 2px;
+      font-size: 12px;
+      font-weight: bold;
+      color: #FFD700;
+      background: rgba(0,0,0,0.8);
+      padding: 2px 4px;
+      border-radius: 4px;
+      border: 1px solid #FFD700;
+      text-shadow: 0 0 4px rgba(255, 215, 0, 0.8);
+    }
+    @keyframes winGlow {
+      0%{transform:scale(1);filter:brightness(1)}
+      50%{transform:scale(1.08);filter:brightness(1.15)}
+      100%{transform:scale(1);filter:brightness(1)}
+    }
+    @keyframes expandedWildGlow {
+      0%{transform:scale(1);filter:brightness(1)}
+      25%{transform:scale(1.1);filter:brightness(1.2)}
+      50%{transform:scale(1.05);filter:brightness(1.3)}
+      75%{transform:scale(1.1);filter:brightness(1.2)}
+      100%{transform:scale(1);filter:brightness(1)}
+    }
+
+    /* Payline overlay (SVG) */
+    .payline-svg { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 50 }
+    .payline-line { fill: none; stroke: rgba(255,215,0,0.95); stroke-width: 6; stroke-linecap: round; stroke-linejoin: round; filter: drop-shadow(0 8px 24px rgba(255,200,60,0.6)); }
+    .payline-line.fade { animation: paylineFade 2.5s ease forwards; }
+    /* Canvas-based payline overlay */
+    .payline-canvas { position: absolute; left:0; top:0; width:100%; height:100%; pointer-events:none; z-index:60; display:block; }
+    @keyframes paylineFade { 0% { opacity: 1; stroke-dashoffset: 0 } 80% { opacity: 1 } 100% { opacity: 0 } }
+
+    /* Controls */
+    .controls {display:flex;gap:12px;align-items:center;justify-content:center;padding:12px 6px;margin-top:8px;flex-wrap:wrap}
+    .spin-btn{
+      background:linear-gradient(90deg,var(--gold),#ffd700 60%, #ffcc33);
+      border:0;padding:14px 36px;border-radius:40px;font-weight:800;color:#111;font-size:18px;
+      box-shadow:0 8px 30px rgba(255,200,60,0.18), inset 0 -4px 12px rgba(255,255,255,0.2);
+      cursor:pointer;transition:transform 160ms, box-shadow 160ms;
+      outline:none;
+      flex-shrink: 0;
+    }
+    .spin-btn:active{transform:translateY(2px)}
+    .spin-btn:hover{transform:translateY(-4px)}
+    .spin-btn[disabled]{opacity:.6;cursor:not-allowed;transform:none}
+    .btn {font-family:'Montserrat', sans-serif;background: linear-gradient(145deg, rgba(20,15,45,0.8), rgba(30,25,60,0.7));border:1px solid rgba(150,100,255,0.3);padding:12px 16px;border-radius:16px;color:var(--muted);cursor:pointer;font-weight:600;box-shadow:0 4px 20px rgba(0,0,0,0.3), 0 0 15px rgba(150,100,255,0.1), inset 0 1px 0 rgba(255,255,255,0.1);transition:all 200ms ease;backdrop-filter: blur(10px)}
+    .bet-area{display:flex;gap:8px;align-items:center}
+    input[type=number] {font-family:'Montserrat', sans-serif;width:110px;padding:12px;border-radius:12px;border:1px solid rgba(150,100,255,0.3);background: linear-gradient(145deg, rgba(20,15,45,0.8), rgba(30,25,60,0.7));color:#fff;font-weight:700;text-align:center;box-shadow:inset 0 2px 10px rgba(0,0,0,0.3), 0 0 15px rgba(150,100,255,0.1);backdrop-filter: blur(10px)}
+    
+    /* Responsive controls */
+    @media(max-width:1200px){
+      .spin-btn{padding:12px 32px;font-size:16px}
+      .btn{padding:8px 12px;font-size:14px}
+      input[type=number]{width:100px;padding:8px}
+    }
+    @media(max-width:1000px){
+      .spin-btn{padding:10px 28px;font-size:15px}
+      .btn{padding:7px 10px;font-size:13px}
+      input[type=number]{width:90px;padding:7px}
+      .controls{gap:8px}
+    }
+
+    /* Lines and message area */
+    .info-row{display:flex;justify-content:space-between;align-items:center;margin-top:12px}
+    .lines {display:flex;gap:6px;flex-wrap:wrap}
+    .line-pill{background:#0b0820;padding:6px 10px;border-radius:999px;font-size:12px;color:var(--muted);border:none}
+    .message {margin-top:10px;padding:10px;border-radius:10px;background:#0b0820;font-size:14px;color:var(--muted)}
+
+    /* Big win banner */
+    .win-banner{
+      position:fixed;left:50%;top:50%;transform:translate(-50%,-50%) scale(.8);z-index:9999;
+      background:linear-gradient(180deg,#fff7df,#fff0b8);color:#2b1700;padding:30px 48px;border-radius:20px;
+      box-shadow:0 30px 90px rgba(0,0,0,0.6);text-align:center;font-family:'Playfair Display',serif;font-size:34px;
+      display:none;pointer-events:none;border:6px solid #fff;opacity:0;transition:all 300ms cubic-bezier(.4,0,.2,1);
+    }
+    .win-banner.show{
+      transform:translate(-50%,-50%) scale(1);opacity:1;
+    }
+    .win-banner .sum{display:block;font-size:46px;color:#2b1700;margin-top:8px;font-weight:900;text-shadow:0 6px 18px rgba(124,77,255,0.08)}
+
+    /* confetti canvas full screen */
+    #confetti-canvas{position:fixed;inset:0;pointer-events:none;z-index:9998}
+
+    /* accessibility focus */
+    button:focus, input:focus {outline:2px solid rgba(124,77,255,0.6);outline-offset:3px}
+
+    /* Music volume slider */
+    #music-volume {
+      -webkit-appearance: none;
+      appearance: none;
+      background: rgba(255,255,255,0.1);
+      outline: none;
+      opacity: 0.8;
+      transition: opacity 0.2s;
+      border-radius: 2px;
+      height: 4px;
+    }
+    
+    #music-volume:hover {
+      opacity: 1;
+    }
+    
+    #music-volume::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 12px;
+      height: 12px;
+      background: #ffd36b;
+      cursor: pointer;
+      border-radius: 50%;
+      border: 2px solid rgba(255,255,255,0.3);
+    }
+    
+    #music-volume::-moz-range-thumb {
+      width: 12px;
+      height: 12px;
+      background: #ffd36b;
+      cursor: pointer;
+      border-radius: 50%;
+      border: 2px solid rgba(255,255,255,0.3);
+    }
+
+    /* responsive tweaks */
+    @media(max-width:720px){
+      .reel{width:60px}
+      :root{ --symbol-h:48px }
+      .symbol{font-size:20px}
+      .spin-btn{padding:12px 22px;font-size:16px}
+      .side{display:none}
+      .ad-banner-side img{max-width:95%;height:auto}
+      .stage{padding:10px}
+      .card{padding:12px}
+      .floating-bonus-btn{bottom:20px;right:20px}
+      .floating-bonus-button{padding:12px 18px;min-width:160px}
+      .bonus-icon{font-size:20px}
+      .bonus-title{font-size:14px}
+      .bonus-cost{font-size:11px}
+    }
+    
+    @media(max-width:480px){
+      .reel{width:50px}
+      :root{ --symbol-h:40px }
+      .symbol{font-size:18px}
+      .spin-btn{padding:10px 18px;font-size:14px}
+      .ad-banner-side img{max-width:90%;height:60px}
+      .stage{padding:5px}
+      .card{padding:10px}
+      .title{font-size:24px}
+      .header{flex-direction:column;gap:8px}
+      .floating-bonus-btn{bottom:15px;right:15px}
+      .floating-bonus-button{padding:10px 14px;min-width:140px}
+      .bonus-icon{font-size:18px}
+      .bonus-title{font-size:13px}
+      .bonus-cost{font-size:10px}
+    }
+    
+    @media(max-width:360px){
+      .reel{width:45px}
+      :root{ --symbol-h:36px }
+      .symbol{font-size:16px}
+      .spin-btn{padding:8px 16px;font-size:12px}
+      .stage{padding:2px}
+      .card{padding:8px}
+      .title{font-size:20px}
+      .floating-bonus-btn{bottom:10px;right:10px}
+      .floating-bonus-button{padding:8px 12px;min-width:120px}
+      .bonus-icon{font-size:16px}
+      .bonus-title{font-size:12px}
+      .bonus-cost{font-size:9px}
+    }
+
+    /* Ad banner styles */
+    .ad-banner-side {
+      margin-top: 12px;
+      text-align: center;
+      padding: 8px;
+      background: rgba(255,255,255,0.02);
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.04);
+    }
+
+    .ad-banner-side img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 8px;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      cursor: pointer;
+    }
+
+    .ad-banner-side img:hover {
+      transform: scale(1.05);
+      box-shadow: 0 8px 30px rgba(255,215,0,0.2);
+    }
+
+    /* Floating Buy Bonus Button */
+    .floating-bonus-btn {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      z-index: 1000;
+      animation: floatIn 0.5s ease-out;
+    }
+
+    .floating-bonus-button {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: linear-gradient(135deg, #7c4dff, #b388ff);
+      color: white;
+      border: none;
+      padding: 16px 24px;
+      border-radius: 50px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 8px 30px rgba(124, 77, 255, 0.4), 0 4px 15px rgba(0, 0, 0, 0.3);
+      transition: all 0.3s ease;
+      min-width: 180px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .floating-bonus-button::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+      transition: left 0.5s ease;
+    }
+
+    .floating-bonus-button:hover::before {
+      left: 100%;
+    }
+
+    .floating-bonus-button:hover {
+      transform: translateY(-3px) scale(1.05);
+      box-shadow: 0 12px 40px rgba(124, 77, 255, 0.6), 0 6px 20px rgba(0, 0, 0, 0.4);
+      background: linear-gradient(135deg, #8e5cff, #c298ff);
+    }
+
+    .floating-bonus-button:active {
+      transform: translateY(-1px) scale(1.02);
+    }
+
+    .floating-bonus-button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: 0 4px 15px rgba(124, 77, 255, 0.2);
+    }
+
+    .bonus-icon {
+      font-size: 24px;
+      animation: bounce 2s infinite;
+    }
+
+    .bonus-text {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .bonus-title {
+      font-size: 16px;
+      font-weight: 800;
+      line-height: 1;
+      margin-bottom: 2px;
+    }
+
+    .bonus-cost {
+      font-size: 12px;
+      opacity: 0.9;
+      font-weight: 500;
+    }
+
+    @keyframes floatIn {
+      0% {
+        transform: translateY(100px) scale(0.8);
+        opacity: 0;
+      }
+      100% {
+        transform: translateY(0) scale(1);
+        opacity: 1;
+      }
+    }
+
+    @keyframes bounce {
+      0%, 20%, 50%, 80%, 100% {
+        transform: translateY(0);
+      }
+      40% {
+        transform: translateY(-5px);
+      }
+      60% {
+        transform: translateY(-3px);
+      }
+    }
+
+    @keyframes bonusActivation {
+      0% {
+        transform: scale(1) rotate(0deg);
+        opacity: 1;
+      }
+      25% {
+        transform: scale(1.2) rotate(5deg);
+        opacity: 0.9;
+      }
+      50% {
+        transform: scale(1.1) rotate(-5deg);
+        opacity: 0.8;
+      }
+      75% {
+        transform: scale(1.15) rotate(3deg);
+        opacity: 0.9;
+      }
+      100% {
+        transform: scale(1) rotate(0deg);
+        opacity: 1;
+      }
+    }
+
+    @keyframes bonusGlow {
+      0%, 100% {
+        box-shadow: 0 0 20px rgba(255, 215, 0, 0.8), 0 0 40px rgba(255, 165, 0, 0.6);
+        background: linear-gradient(135deg, rgba(255, 215, 0, 0.1), rgba(255, 165, 0, 0.1));
+      }
+      50% {
+        box-shadow: 0 0 40px rgba(255, 215, 0, 1), 0 0 80px rgba(255, 165, 0, 0.8);
+        background: linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(255, 165, 0, 0.2));
+      }
+    }
+
+    @keyframes bonusTextPopup {
+      0% {
+        transform: translateY(60px) scale(0.8);
+        opacity: 0;
+      }
+      50% {
+        transform: translateY(10px) scale(0.95);
+        opacity: 0.8;
+      }
+      100% {
+        transform: translateY(0) scale(1);
+        opacity: 1;
+      }
+    }
+
+    @keyframes fadeInOut {
+      0% {
+        opacity: 0;
+        transform: scale(0.8);
+      }
+      50% {
+        opacity: 1;
+        transform: scale(1);
+      }
+      100% {
+        opacity: 0;
+        transform: scale(1.1);
+      }
+    }
+
+    .bonus-activation {
+      animation: bonusActivation 1.5s ease-in-out;
+    }
+
+    .bonus-glow {
+      animation: bonusGlow 2s ease-in-out infinite;
+    }
+
+    .bonus-text-popup {
+      animation: bonusTextPopup 1s ease-out;
+    }
+
+    .reels.bonus-mode {
+      animation: bonusGlow 3s ease-in-out infinite;
+      border: 2px solid rgba(255, 215, 0, 0.6);
+    }
+
+    .reels.bonus-mode .reel {
+      border-color: rgba(255, 215, 0, 0.4);
+      box-shadow: inset 0 2px 20px rgba(255, 215, 0, 0.3), 0 8px 32px rgba(255, 215, 0, 0.2);
+    }
+
+    /* History container scrollbar */
+    .history-container::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .history-container::-webkit-scrollbar-track {
+      background: rgba(255,255,255,0.05);
+      border-radius: 3px;
+    }
+
+    .history-container::-webkit-scrollbar-thumb {
+      background: rgba(255,255,255,0.2);
+      border-radius: 3px;
+    }
+
+    .history-container::-webkit-scrollbar-thumb:hover {
+      background: rgba(255,255,255,0.3);
+    }
+  </style>
+</head>
+<body>
+
+<div class="stage" role="application" aria-label="Prototype slot game">
+  <!-- Left panel -->
+  <aside class="side" aria-hidden="false">
+    <div class="brand">Дымоход</div>
+    <div class="small">Balance</div>
+    <div class="balance" aria-live="polite">
+      <div class="amount" id="balance">1000</div>
+      <div class="small">₽</div>
+    </div>
+    <div class="bonus-panel" style="margin-top: 12px; text-align: center;">
+      <div class="small">Bonus Spins</div>
+      <div class="stat" id="bonus-spins">0</div>
+    </div>
+
+    <div class="panel-row"><div class="small">Min Bet</div><div class="stat" id="min-bet">10</div></div>
+    <div class="panel-row"><div class="small">Max Bet</div><div class="stat" id="max-bet">10000</div></div>
+
+    <div style="margin-top:16px">
+      <div class="small">History (last 20)</div>
+      <div class="history-container" style="max-height:300px;overflow-y:auto;margin-top:8px;border:none;border-radius:8px;background:#0b0820">
+        <ol id="history" style="padding-left:18px;margin:0;color:var(--muted);font-size:12px;list-style-position:inside"></ol>
+      </div>
+      <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">
+        <button id="export-json" class="btn" title="Export history">Export JSON</button>
+        <button id="clear-history" class="btn" title="Clear history" style="background:rgba(255,107,107,0.1);color:#ff6b6b;border:1px solid rgba(255,107,107,0.2)">Clear</button>
+      </div>
+    </div>
+    <div style="margin-top:8px;display:flex;gap:8px">
+      <button id="reset" class="btn" title="Reset balance">Reset</button>
+    </div>
+  </aside>
+
+  <!-- Main card -->
+  <main class="card" role="main">
+    <div class="header">
+      <div>
+        <div class="title">Дымоход 5×5</div>
+        <div class="subtitle">Enhanced 5×5 Slot — 25 Paylines, Bonus Game, Wild & Scatter</div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button id="mute" class="btn" aria-pressed="false" aria-label="Toggle sound">🔊</button>
+        <button id="music-toggle" class="btn" aria-pressed="false" aria-label="Toggle background music">🎵</button>
+        <div style="display:flex;align-items:center;gap:6px">
+          <span style="font-size:12px;color:var(--muted)">🎶</span>
+          <input type="range" id="music-volume" min="0" max="100" value="30" 
+                 style="width:60px;height:4px;background:rgba(255,255,255,0.1);border-radius:2px;outline:none"
+                 aria-label="Music volume">
+        </div>
+        <div style="text-align:right">
+          <div class="small">Volatility</div>
+          <select id="vol" class="btn" style="background:transparent;color:#fff;border-radius:10px;border:1px solid rgba(255,255,255,0.03);padding:6px">
+            <option value="medium">Medium</option>
+            <option value="low">Low</option>
+            <option value="high">High</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="reels-wrap" aria-hidden="false">
+      <div class="reels" id="reels" role="region" aria-label="Game reels">
+        <!-- 5 reels -->
+        <div class="reel" data-index="0" aria-hidden="false"><div class="strip"></div></div>
+        <div class="reel" data-index="1"><div class="strip"></div></div>
+        <div class="reel" data-index="2"><div class="strip"></div></div>
+        <div class="reel" data-index="3"><div class="strip"></div></div>
+        <div class="reel" data-index="4"><div class="strip"></div></div>
+        <!-- Canvas overlay for drawing payline visuals (absolute over reels) -->
+        <canvas id="payline-canvas" class="payline-canvas" aria-hidden="true"></canvas>
+      </div>
+    </div>
+
+    <div class="controls" role="region" aria-label="Controls">
+      <div class="bet-area" aria-hidden="false">
+        <button id="dec" class="btn" aria-label="Decrease bet">−</button>
+        <input id="bet" type="number" value="100" min="10" step="10" aria-label="Bet amount">
+        <button id="inc" class="btn" aria-label="Increase bet">+</button>
+      </div>
+
+      <button id="spin" class="spin-btn" aria-label="Spin (space)"><span id="spin-text">SPIN</span></button>
+      <button id="auto" class="btn" aria-pressed="false" aria-label="Auto spin">AUTO</button>
+    </div>
+
+    <div class="info-row">
+      <div style="display:flex;gap:8px;align-items:center;justify-content:center;width:100%">
+        <div class="small">Last win:</div><div class="stat" id="last-win">0 ₽</div>
+      </div>
+    </div>
+
+
+    <div class="message" id="message" aria-live="polite">5×5 Enhanced Slot с 25 линиями! Нажмите SPIN или пробел для вращения. Wild ⭐ заменяет, Scatter 🔥 запускает бонус! 🎵 Музыка: создайте папку "audio" и добавьте файл "baobab.mp3"</div>
+  </main>
+
+  <!-- Right panel -->
+  <aside class="side" aria-hidden="false">
+    <div class="small">Session Stats</div>
+    <div class="panel-row"><div class="small">Spins</div><div class="stat" id="total-spins">0</div></div>
+    <div class="panel-row"><div class="small">Total Won</div><div class="stat" id="total-won">0</div></div>
+    <div class="panel-row"><div class="small">Bonus Spins</div><div class="stat" id="bonus-spins">0</div></div>
+    
+    <!-- Side Ad Banner -->
+    <div class="ad-banner-side">
+      <a href="https://rutube.ru/video/be9b5aece2911aecc68fa03942e25bac" target="_blank" rel="noopener noreferrer" style="display:inline-block">
+        <img src="img/ad1.png" alt="Advertisement" onerror="this.style.display='none';this.parentElement.style.display='none'">
+      </a>
+    </div>
+    <div style="margin-top:12px">
+      <div class="small">Paytable (× bet) - 5×5 Grid</div>
+      <ul style="padding-left:18px;margin-top:8px;color:var(--muted);font-size:13px">
+        <li><span class="trident-symbol" style="display:inline-block;width:20px;height:20px;background:url('img/kalik11.jpg') center/contain no-repeat;margin-right:4px;vertical-align:middle;"></span> ×6/8/15 (3/4/5)</li>
+        <li><span class="lightning-symbol" style="display:inline-block;width:20px;height:20px;background:url('img/trava.jpg') center/contain no-repeat;margin-right:4px;vertical-align:middle;"></span> ×4/5/8</li>
+        <li><span class="coin-symbol" style="display:inline-block;width:20px;height:20px;background:url('img/par.jpg') center/contain no-repeat;margin-right:4px;vertical-align:middle;"></span> ×3/4/6</li>
+        <li><span class="laurel-symbol" style="display:inline-block;width:20px;height:20px;background:url('img/veip.jpg') center/contain no-repeat;margin-right:4px;vertical-align:middle;"></span> ×2/2.5/4</li>
+        <li><span class="trophy-symbol" style="display:inline-block;width:20px;height:20px;background:url('img/kaif.jpg') center/contain no-repeat;margin-right:4px;vertical-align:middle;"></span> ×3/4/7</li>
+        <li><span class="eagle-symbol" style="display:inline-block;width:20px;height:20px;background:url('img/sigi.jpg') center/contain no-repeat;margin-right:4px;vertical-align:middle;"></span> ×2/2.5/4</li>
+        <li><span class="temple-symbol" style="display:inline-block;width:20px;height:20px;background:url('img/pivo.jpg') center/contain no-repeat;margin-right:4px;vertical-align:middle;"></span> ×6/8/12</li>
+        <li><span class="sword-symbol" style="display:inline-block;width:20px;height:20px;background:url('img/crack.jpg') center/contain no-repeat;margin-right:4px;vertical-align:middle;"></span> ×3/4/6</li>
+        <li><span class="shield-symbol" style="display:inline-block;width:20px;height:20px;background:url('img/ugli11.jpg') center/contain no-repeat;margin-right:4px;vertical-align:middle;"></span> ×2/2.5/4</li>
+        <li><span class="glock-symbol" style="display:inline-block;width:20px;height:20px;background:url('img/glock.jpg') center/contain no-repeat;margin-right:4px;vertical-align:middle;"></span> ×3/4/6</li>
+        <li>Wild (<span class="wild-symbol" style="display:inline-block;width:20px;height:20px;background:url('img/wild.jpg') center/contain no-repeat;margin-right:4px;vertical-align:middle;"></span>) substitutes any symbol</li>
+        <li>Scatter (<span class="scatter-symbol" style="display:inline-block;width:20px;height:20px;background:url('img/bonus.jpg') center/contain no-repeat;margin-right:4px;vertical-align:middle;"></span>) ×5/10/25 (3/4/5)</li>
+        <li>25 Paylines - 5×5 Grid</li>
+      </ul>
+    </div>
+    
+    <div style="margin-top:12px">
+      <div class="small">Big Wins Statistics</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
+        <div style="text-align:center;padding:8px;background:rgba(255,215,0,0.1);border-radius:8px;border:1px solid rgba(255,215,0,0.2)">
+          <div class="small" style="color:var(--muted)">Big Wins</div>
+          <div class="stat" id="big-wins" style="color:#ffd36b">0</div>
+        </div>
+        <div style="text-align:center;padding:8px;background:rgba(124,77,255,0.1);border-radius:8px;border:1px solid rgba(124,77,255,0.2)">
+          <div class="small" style="color:var(--muted)">Mega Wins</div>
+          <div class="stat" id="mega-wins" style="color:#b388ff">0</div>
+        </div>
+        <div style="text-align:center;padding:8px;background:rgba(255,0,110,0.1);border-radius:8px;border:1px solid rgba(255,0,110,0.2);grid-column:1/-1">
+          <div class="small" style="color:var(--muted)">Super Wins</div>
+          <div class="stat" id="super-wins" style="color:#ff4081">0</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+</div>
+
+<!-- Floating Buy Bonus Button -->
+<div class="floating-bonus-btn" id="floating-bonus-container">
+  <button id="buy-bonus" class="floating-bonus-button">
+    <div class="bonus-icon">🎁</div>
+    <div class="bonus-text">
+      <div class="bonus-title">Buy Bonus</div>
+      <div class="bonus-cost">100× Bet</div>
+    </div>
+  </button>
+</div>
+
+<!-- Win banner + confetti canvas -->
+<div class="win-banner" id="win-banner" role="status" aria-live="assertive"><div>🎉 ВЫ ВЫИГРАЛИ</div><div class="sum" id="win-sum">0 ₽</div></div>
+<canvas id="confetti-canvas" width="800" height="600" aria-hidden="true"></canvas>
+
+<!-- Background music -->
+<audio id="background-music" loop>
+  <source src="audio/baobab.mp3" type="audio/mpeg">
+  <source src="audio/baobab.ogg" type="audio/ogg">
+  Ваш браузер не поддерживает фоновую музыку.
+</audio>
+
+<!-- Audio (simple oscillator fallback + short embedded sound using WebAudio) -->
+<script>
+/* -------------------------
+   Core game implementation
+   - Single-file vanilla JS (ES6+)
+   - Uses crypto.getRandomValues for RNG
+   - Confetti canvas + WebAudio oscillator sounds
+   ------------------------- */
+
+(function(){
+  // --- Config ---
+  const REELS = 5;
+  const ROWS = 5;  // Увеличиваем до 5 рядов
+  const SYMBOL_H = 68; // px
+  // Game symbols array
+  const SYMBOLS = ['🔱', '⚡', '🪙', '🌿', '🏆', '🦅', '🏛️', '⚔️', '🛡️', '🏹', '⭐', '🔥'];
+  // Special symbols
+  const TRIDENT_IMG = '🔱'; // Временный символ, будет заменен на картинку
+  const WILD = '⭐';
+  const SCATTER = '🔥';
+  const BONUS_SYMBOL = '🎁';
+  
+  // Symbol properties for reference
+  const SYMBOL_PROPERTIES = {
+    '🔱': { name: 'Trident', multiplier: 10, weight: 10 },
+    '⚡': { name: 'Lightning', multiplier: 6, weight: 15 },
+    '🪙': { name: 'Coin', multiplier: 4, weight: 20 },
+    '🌿': { name: 'Laurel', multiplier: 3, weight: 25 },
+    '🏆': { name: 'Trophy', multiplier: 5, weight: 15 },
+    '🦅': { name: 'Eagle', multiplier: 3, weight: 20 },
+    '🏛️': { name: 'Temple', multiplier: 8, weight: 12 },
+    '⚔️': { name: 'Sword', multiplier: 4, weight: 18 },
+    '🛡️': { name: 'Shield', multiplier: 3, weight: 22 },
+    '🏹': { name: 'Bow', multiplier: 4, weight: 18 },
+    [WILD]: { name: 'Wild', multiplier: 0, weight: 5, isWild: true },
+    [SCATTER]: { name: 'Scatter', multiplier: 0, weight: 2, isScatter: true }
+  };
+  
+  // Game modes
+  const MODES = {
+    ZEUS: { name: 'Light', volatility: 'high', wildMultiplier: 2, scatterWeight: 3 },
+    HADES: { name: 'Dark', volatility: 'very high', wildMultiplier: 3, scatterWeight: 5 }
+  };
+
+  // Paytable multipliers per symbol (times bet for 3..5 in a line)
+  const PAY = {
+    '🔱': {3:6,4:8,5:15},
+    '⚡': {3:4,4:5,5:8},
+    '🪙': {3:3,4:4,5:6},
+    '🌿': {3:2,4:2.5,5:4},
+    '🏆': {3:3,4:4,5:7},
+    '🦅': {3:2,4:2.5,5:4},
+    '🏛️': {3:6,4:8,5:12},
+    '⚔️': {3:3,4:4,5:6},
+    '🛡️': {3:2,4:2.5,5:4},
+    '🏹': {3:3,4:4,5:6},
+    // Wild & scatter handled specially: wild substitutes, scatter pays flat
+  };
+  const SCATTER_PAYOUT = {3:5,4:10,5:25};
+
+  // Paylines (row indices 0..4) — 25 lines for 5x5 grid
+  const PAYLINES = [
+    // Horizontal lines
+    [0, 0, 0, 0, 0],  // Row 1
+    [1, 1, 1, 1, 1],  // Row 2
+    [2, 2, 2, 2, 2],  // Row 3
+    [3, 3, 3, 3, 3],  // Row 4
+    [4, 4, 4, 4, 4],  // Row 5
+    
+    // Diagonal lines
+    [0, 1, 2, 3, 4],  // Diagonal down-right
+    [4, 3, 2, 1, 0],  // Diagonal up-right
+    [0, 0, 1, 1, 2],  // Mixed pattern 1
+    [1, 1, 2, 2, 3],  // Mixed pattern 2
+    [2, 2, 3, 3, 4],  // Mixed pattern 3
+    [3, 3, 4, 4, 0],  // Mixed pattern 4
+    [4, 4, 0, 0, 1],  // Mixed pattern 5
+    
+    // V and ^ shapes
+    [0, 1, 2, 1, 0],  // V shape top
+    [4, 3, 2, 3, 4],  // ^ shape bottom
+    [1, 2, 3, 2, 1],  // V shape middle
+    [2, 1, 0, 1, 2],  // ^ shape top-middle
+    [3, 2, 1, 2, 3],  // V shape bottom-middle
+    
+    // Zigzag patterns
+    [0, 1, 0, 1, 0],  // Zigzag 1
+    [1, 2, 1, 2, 1],  // Zigzag 2
+    [2, 3, 2, 3, 2],  // Zigzag 3
+    [3, 4, 3, 4, 3],  // Zigzag 4
+    [4, 3, 4, 3, 4],  // Zigzag 5
+    
+    // Complex patterns
+    [0, 2, 4, 2, 0],  // Diamond
+    [4, 2, 0, 2, 4],  // Inverted diamond
+    [1, 3, 1, 3, 1],  // Alternating
+    [2, 0, 2, 4, 2],  // Cross pattern
+  ];
+
+  // UI elements
+  const reelsContainer = document.getElementById('reels');
+  const reelsEls = Array.from(document.querySelectorAll('.reel'));
+  const balanceEl = document.getElementById('balance');
+  const betInput = document.getElementById('bet');
+  const spinBtn = document.getElementById('spin');
+  const autoBtn = document.getElementById('auto');
+  const incBtn = document.getElementById('inc');
+  const decBtn = document.getElementById('dec');
+  const messageEl = document.getElementById('message');
+  const winBanner = document.getElementById('win-banner');
+  const winSum = document.getElementById('win-sum');
+  const lastWinEl = document.getElementById('last-win');
+  const totalSpinsEl = document.getElementById('total-spins');
+  const totalWonEl = document.getElementById('total-won');
+  const historyEl = document.getElementById('history');
+  const exportBtn = document.getElementById('export-json');
+  const resetBtn = document.getElementById('reset');
+  const muteBtn = document.getElementById('mute');
+  const musicToggleBtn = document.getElementById('music-toggle');
+  const musicVolumeSlider = document.getElementById('music-volume');
+  const volSelect = document.getElementById('vol');
+
+  // Background music elements
+  const backgroundMusic = document.getElementById('background-music');
+  let musicPlaying = false;
+  let musicVolume = 0.3; // Default volume for background music
+
+  // Confetti canvas
+  const confettiCanvas = document.getElementById('confetti-canvas');
+  const confettiCtx = confettiCanvas.getContext('2d');
+  let confettiParticles = [];
+
+  // Audio (basic synth)
+  const AudioCtx = window.AudioContext || window.webkitAudioContext;
+  let audioCtx = null;
+  let muted = false;
+  const ensureAudio = ()=>{ if(!audioCtx && AudioCtx) audioCtx = new AudioCtx(); };
+
+  function playTone(freq=440,duration=0.12,type='sine',gain=0.12){
+    if(muted) return;
+    try{
+      ensureAudio();
+      const osc = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      osc.connect(g);
+      g.connect(audioCtx.destination);
+      osc.frequency.value=freq;
+      osc.type=type;
+      g.gain.setValueAtTime(gain,audioCtx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+duration);
+      osc.start(audioCtx.currentTime);
+      osc.stop(audioCtx.currentTime+duration);
+    }catch(e){
+      // Fallback: silent
+    }
+  }
+
+  // Balanced speed sound effects
+  function playSpinSound(phase) {
+    if(muted) return;
+    
+    switch(phase) {
+      case 'start':
+        // Comfortable start
+        playTone(240, 0.05, 'sawtooth', 0.11);
+        break;
+      case 'spinning':
+        // Balanced mechanical hum
+        playTone(170, 0.25, 'triangle', 0.055);
+        break;
+      case 'decelerating':
+        // Smooth slowdown
+        playTone(330, 0.3, 'sine', 0.07);
+        break;
+      case 'stop':
+        // Clear click
+        playTone(850, 0.02, 'square', 0.09);
+        break;
+      case 'complete':
+        // Balanced completion chime
+        playTone(523, 0.06, 'sine', 0.13);
+        setTimeout(() => playTone(659, 0.06, 'sine', 0.11), 80);
+        break;
+    }
+  }
+
+  // Background music control functions
+  function toggleBackgroundMusic() {
+    if (!backgroundMusic) return;
+    
+    if (musicPlaying) {
+      backgroundMusic.pause();
+      musicToggleBtn.textContent = '🎵';
+      musicToggleBtn.setAttribute('aria-pressed', 'false');
+      musicPlaying = false;
+    } else {
+      // Set volume and play
+      backgroundMusic.volume = musicVolume;
+      backgroundMusic.play().catch(error => {
+        console.log('Background music autoplay blocked:', error);
+        showMessage('Нажмите кнопку 🎵 для включения музыки', 'info');
+      });
+      musicToggleBtn.textContent = '🔇';
+      musicToggleBtn.setAttribute('aria-pressed', 'true');
+      musicPlaying = true;
+    }
+  }
+
+  function setMusicVolume(volume) {
+    musicVolume = Math.max(0, Math.min(1, volume));
+    if (backgroundMusic) {
+      backgroundMusic.volume = musicVolume;
+    }
+    // Update slider to match
+    if (musicVolumeSlider) {
+      musicVolumeSlider.value = musicVolume * 100;
+    }
+    // Save to localStorage
+    localStorage.setItem('musicVolume', musicVolume.toString());
+  }
+
+  // Initialize background music
+  function initBackgroundMusic() {
+    if (backgroundMusic) {
+      // Load saved volume
+      const savedVolume = localStorage.getItem('musicVolume');
+      if (savedVolume) {
+        musicVolume = parseFloat(savedVolume);
+        musicVolumeSlider.value = musicVolume * 100;
+      }
+      
+      backgroundMusic.volume = musicVolume;
+      
+      // Try to autoplay music (may be blocked by browser)
+      backgroundMusic.play().then(() => {
+        musicPlaying = true;
+        musicToggleBtn.textContent = '🔇';
+        musicToggleBtn.setAttribute('aria-pressed', 'true');
+      }).catch(error => {
+        console.log('Background music autoplay blocked:', error);
+        musicPlaying = false;
+        musicToggleBtn.textContent = '🎵';
+        musicToggleBtn.setAttribute('aria-pressed', 'false');
+      });
+    }
+  }
+
+  function randInt(n){
+    const a = new Uint32Array(1);
+    crypto.getRandomValues(a);
+    return a[0] % n;
+  }
+
+  // --- State ---
+  const MIN_BET = 10;
+  const MAX_BET = 10000;
+  document.getElementById('min-bet').textContent = MIN_BET;
+  document.getElementById('max-bet').textContent = MAX_BET;
+
+  let state = {
+    balance: 1000,
+    bet: 10,
+    totalSpins: 0,
+    totalWon: 0,
+    totalBet: 0,
+    history: [],
+    bonusSpins: 0,
+    inBonusMode: false,
+    bonusTriggered: false,
+    bonusBuyPrice: 0,
+    lastWin: 0,
+    autoSpins: 0,
+    autoSpinning: false,
+    winStreak: 0,
+    lastBonusTime: 0,
+    mode: 'ZEUS',  // Default to Zeus mode
+    currentMode: MODES.ZEUS,
+    freeSpinsWon: 0,
+    totalFreeSpins: 0,
+    wildMultiplier: 1,
+    scatterCount: 0,
+    bonusRoundCount: 0,
+    maxWin: 15000,  // 15,000x bet
+    expandedWilds: [],  // Track positions of expanded wilds in bonus mode
+    bonusWildMultipliers: {}, // Track multiplier for each expanded wild
+    totalBonusWins: 0,
+    bonusRoundActive: false,
+    maxWinAmount: 0,  // Track maximum win amount
+    bigWins: 0,      // Count big wins (50x+ bet)
+    megaWins: 0,     // Count mega wins (100x+ bet)
+    superWins: 0     // Count super wins (500x+ bet)
+  };
+
+  // init UI
+  function refreshUI(){
+    balanceEl.textContent = Math.floor(state.balance);
+    totalSpinsEl.textContent = state.totalSpins;
+    totalWonEl.textContent = state.totalWon;
+    
+    // Update total bet, profit and win summary
+    const totalBetEl = document.getElementById('total-bet');
+    const totalWonMainEl = document.getElementById('total-won');
+    const totalProfitEl = document.getElementById('total-profit');
+    
+    if (totalBetEl) totalBetEl.textContent = `${state.totalBet} ₽`;
+    if (totalWonMainEl) totalWonMainEl.textContent = `${state.totalWon} ₽`;
+    if (totalProfitEl) {
+      const profit = state.totalWon - state.totalBet;
+      totalProfitEl.textContent = `${profit} ₽`;
+      totalProfitEl.style.color = profit >= 0 ? '#8ef58e' : '#ff6b6b';
+    }
+    
+    // Update bonus UI
+    const bonusSpinsEl = document.getElementById('bonus-spins');
+    const buyBonusBtn = document.getElementById('buy-bonus');
+    const currentBet = Number(betInput.value);
+    const bonusCost = currentBet * 100;
+    
+    if (bonusSpinsEl) bonusSpinsEl.textContent = state.bonusSpins;
+    if (buyBonusBtn) {
+      buyBonusBtn.textContent = `Buy Bonus (${bonusCost}₽)`;
+      buyBonusBtn.disabled = state.balance < bonusCost || state.inBonusMode;
+    }
+    
+    // Update spin button text based on bonus mode
+    const spinText = document.getElementById('spin-text');
+    if (spinText) {
+      spinText.textContent = state.inBonusMode ? `SPIN (${state.bonusSpins} left)` : 'SPIN';
+    }
+    
+    // Save bonus state
+    localStorage.setItem('bonusSpins', state.bonusSpins);
+    localStorage.setItem('inBonusMode', state.inBonusMode);
+    
+    // history
+    historyEl.innerHTML = '';
+    if (state.history.length === 0) {
+      const emptyLi = document.createElement('li');
+      emptyLi.textContent = 'No spins yet';
+      emptyLi.style.color = 'var(--muted)';
+      emptyLi.style.fontStyle = 'italic';
+      historyEl.appendChild(emptyLi);
+    } else {
+      state.history.slice().reverse().forEach((h, index) => {
+        const li = document.createElement('li');
+        li.style.marginBottom = '4px';
+        li.style.padding = '4px 8px';
+        li.style.borderRadius = '4px';
+        li.style.background = h.isBonus ? 'rgba(255,215,0,0.05)' : 'rgba(255,255,255,0.02)';
+        li.style.borderLeft = h.isBonus ? '3px solid #ffd36b' : '3px solid transparent';
+        
+        // Format the entry with better structure
+        const profit = h.win - h.bet;
+        const profitColor = profit > 0 ? '#8ef58e' : profit < 0 ? '#ff6b6b' : 'var(--muted)';
+        const profitSymbol = profit > 0 ? '+' : '';
+        
+        li.innerHTML = `
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <span style="color:${h.isBonus ? '#ffd36b' : 'var(--muted)'}">
+              ${h.time} ${h.isBonus ? '🎁' : ''}
+            </span>
+            <span style="color:${profitColor};font-weight:600">
+              ${profitSymbol}${profit}₽
+            </span>
+          </div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px">
+            Bet: ${h.bet}₽ → Win: ${h.win}₽
+          </div>
+        `;
+        
+        historyEl.appendChild(li);
+      });
+    }
+    
+    // Update big wins statistics
+    const bigWinsEl = document.getElementById('big-wins');
+    const megaWinsEl = document.getElementById('mega-wins');
+    const superWinsEl = document.getElementById('super-wins');
+    
+    if (bigWinsEl) bigWinsEl.textContent = state.bigWins;
+    if (megaWinsEl) megaWinsEl.textContent = state.megaWins;
+    if (superWinsEl) superWinsEl.textContent = state.superWins;
+  }
+  refreshUI();
+
+  // build initial strips (long enough to animate)
+  function buildReels(){
+    reelsEls.forEach((rEl,i)=>{
+      const strip = rEl.querySelector('.strip');
+      strip.style.transform = 'translateY(0px)';
+      strip._offset = 0;
+      strip.innerHTML = '';
+      
+      // Create enough symbols for smooth animation (more than needed)
+      const repeat = 30; // Increased for better animation coverage
+      
+      for(let k=0;k<repeat;k++){
+        for(const s of SYMBOLS){
+          const div = document.createElement('div');
+          div.className = 'symbol';
+          
+          // Добавляем специальные классы для картинок (визуально, логика не меняется)
+          if (s === '🔱') {
+            div.classList.add('trident-img');
+          } else if (s === '🛡️') {
+            div.classList.add('shield-img');
+          } else if (s === '⚡') {
+            div.classList.add('lightning-img');
+          } else if (s === '🪙') {
+            div.classList.add('coin-img');
+          } else if (s === '🌿') {
+            div.classList.add('laurel-img');
+          } else if (s === '⭐') {
+            div.classList.add('wild-img');
+          } else if (s === '🔥') {
+            div.classList.add('scatter-img');
+          } else if (s === '🏆') {
+            div.classList.add('trophy-img');
+          } else if (s === '🦅') {
+            div.classList.add('eagle-img');
+          } else if (s === '🏛️') {
+            div.classList.add('temple-img');
+          } else if (s === '⚔️') {
+            div.classList.add('sword-img');
+          } else if (s === '🏹') {
+            div.classList.add('glock-img');
+          }
+          
+          div.textContent = s;
+          // let CSS variable control height (keeps responsive sizing)
+          div.style.height = '';
+          strip.appendChild(div);
+        }
+      }
+      
+      // Initialize the strip to show the first 5 symbols
+      const symbolH = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--symbol-h')) || 68;
+      const symbolGap = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--symbol-gap')) || 8;
+      const symbolFull = symbolH + symbolGap;
+      
+      // Position the strip so exactly 5 symbols are visible
+      strip.style.transform = 'translateY(0px)';
+      strip._offset = 0;
+    });
+  }
+  buildReels();
+
+  // Helper: apply symbol visual to a strip element (keeps image classes consistent)
+  function applySymbolToElement(el, s){
+    if(!el) return;
+    // reset image classes
+    el.className = 'symbol';
+    // add image class based on symbol
+    if (s === '🔱') {
+      el.classList.add('trident-img');
+    } else if (s === '🛡️') {
+      el.classList.add('shield-img');
+    } else if (s === '⚡') {
+      el.classList.add('lightning-img');
+    } else if (s === '🪙') {
+      el.classList.add('coin-img');
+    } else if (s === '🌿') {
+      el.classList.add('laurel-img');
+    } else if (s === '⭐') {
+      el.classList.add('wild-img');
+    } else if (s === '🔥') {
+      el.classList.add('scatter-img');
+    } else if (s === '🏆') {
+      el.classList.add('trophy-img');
+    } else if (s === '🦅') {
+      el.classList.add('eagle-img');
+    } else if (s === '🏛️') {
+      el.classList.add('temple-img');
+    } else if (s === '⚔️') {
+      el.classList.add('sword-img');
+    } else if (s === '🏹') {
+      el.classList.add('glock-img');
+    }
+    el.textContent = s;
+    el.style.height = '';
+  }
+
+  // Map a logical reel,row (0..ROWS-1) to the currently visible DOM element for that slot.
+  // This selects the DOM child whose center is closest to the expected slot center
+  // and guarantees we target only the 5 visible cells inside the reels container.
+  function getVisibleSymbolElement(reelIndex, rowIndex){
+    const reelEl = reelsEls[reelIndex];
+    if(!reelEl) return null;
+    const strip = reelEl.querySelector('.strip');
+    if(!strip) return null;
+    const children = Array.from(strip.children);
+    if(children.length === 0) return null;
+
+    // Calculate exact position for the requested row (0-4)
+    const symbolH = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--symbol-h')) || 68;
+    const symbolGap = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--symbol-gap')) || 8;
+    const symbolFull = symbolH + symbolGap;
+    
+    // The visible area starts from 0 and shows exactly 5 symbols
+    const targetOffset = rowIndex * symbolFull + (symbolFull / 2);
+    
+    // Find the symbol whose center aligns with this position
+    let best = null; 
+    let bestDist = Infinity;
+    const stripOffset = Math.abs(strip._offset || 0);
+    
+    for(let i = 0; i < children.length; i++){
+      const child = children[i];
+      const childCenter = i * symbolFull + (symbolFull / 2);
+      const adjustedCenter = childCenter - stripOffset;
+      const dist = Math.abs(adjustedCenter - targetOffset);
+      
+      if(dist < bestDist){
+        bestDist = dist;
+        best = child;
+      }
+    }
+
+    return best || children[0] || null;
+  }
+
+  // utility: get symbol at center for a reel after choosing index
+  function sampleResult(){
+    // choose a center index per reel from repeated strip
+    const res = [];
+    for(let r=0;r<REELS;r++){
+      const sym = SYMBOLS[randInt(SYMBOLS.length)];
+      res.push(sym);
+    }
+    return res;
+  }
+
+  // evaluate paylines and return win amount and winning positions
+  function evaluateGrid(grid, bet){
+    // grid: [reel][row] => symbol; bet: number
+    let win = 0;
+    const winningLines = [];
+    
+    // count scatters anywhere
+    let scatterCount = 0;
+    for(let r=0;r<REELS;r++) {
+      for(let row=0;row<ROWS;row++) {
+        if(grid[r][row] === SCATTER) scatterCount++;
+      }
+    }
+    
+    // Handle scatter wins
+    if(scatterCount >= 3){
+      const mult = SCATTER_PAYOUT[scatterCount] || SCATTER_PAYOUT[3];
+      const payout = Math.floor(bet * mult);
+      win += payout;
+      
+      // Find all scatter positions for highlighting
+      const scatterPositions = [];
+      for(let r=0;r<REELS;r++) {
+        for(let row=0;row<ROWS;row++) {
+          if(grid[r][row] === SCATTER) {
+            scatterPositions.push({reel: r, row: row});
+          }
+        }
+      }
+      
+      winningLines.push({
+        type: 'scatter',
+        count: scatterCount,
+        payout: payout,
+        positions: scatterPositions
+      });
+    }
+
+    // Check each payline for winning combinations
+    for(let pi=0; pi<PAYLINES.length; pi++){
+      const path = PAYLINES[pi];
+      let base = null;
+      let len = 0;
+      let positions = [];
+      let wildCount = 0;
+      
+      // Check for matching symbols along the payline
+      for(let r=0; r<REELS; r++){
+        const rowIdx = path[r];
+        const s = grid[r][rowIdx];
+        
+        if(!base){
+          // First symbol in the line
+          if(s === WILD){ 
+            // Wild as first symbol - skip it and look for next non-wild
+            wildCount++;
+            positions.push({reel:r, row:rowIdx}); 
+            continue; 
+          } else if(s === SCATTER) {
+            // Scatter doesn't count for regular lines
+            break;
+          } else {
+            // Normal symbol as base
+            base = s;
+            len = 1 + wildCount; // Include any preceding wilds
+            positions.push({reel:r, row:rowIdx});
+          }
+        } else {
+          // Check if symbol matches or is wild
+          if(s === base || s === WILD){ 
+            len++; 
+            positions.push({reel:r, row:rowIdx}); 
+            if(s === WILD) wildCount++;
+          } else {
+            break;
+          }
+        }
+      }
+      
+      // Check if we have a winning line (3+ matching symbols)
+      if(len >= 3 && base && base !== WILD && base !== SCATTER) {
+        const payInfo = PAY[base];
+        if(payInfo) {
+          const mult = payInfo[len] || payInfo[3];
+          if(mult) {
+            const payout = Math.floor(bet * mult);
+            win += payout;
+            winningLines.push({
+              type: 'line',
+              index: pi+1,
+              payout: payout,
+              positions: positions,
+              base: base,
+              wildCount: wildCount
+            });
+            
+            // Debug output
+            console.log(`Line ${pi+1}: ${base} x${len} = ${payout}₽ (wilds: ${wildCount})`);
+          }
+        }
+      }
+    }
+    
+    // Debug output for total win
+    if(win > 0) {
+      console.log(`Total win: ${win}₽ from ${winningLines.length} lines`);
+    }
+
+  return {win, winningLines};
+}
+
+  // BALANCED SPEED CASINO ANIMATION - Comfortable viewing
+function animateSpinTo(visibleGrid, duration=1200){
+  // visibleGrid: [reel][row] array for rows 0..ROWS-1 (top..bottom)
+  return new Promise((resolve)=>{
+    // Clear winning lines before new spin
+    clearPaylineCanvas();
+
+    // Support acceleration request: if user requests to speed up current spin
+    // (set by spin button when spin is already running)
+    let accelerated = false;
+    
+    const start = performance.now();
+    
+    // Get symbol dimensions for precise calculations
+    const root = document.documentElement;
+    const symbolH = parseFloat(getComputedStyle(root).getPropertyValue('--symbol-h')) || 68;
+    const symbolGap = parseFloat(getComputedStyle(root).getPropertyValue('--symbol-gap')) || 8;
+    const symbolFull = symbolH + symbolGap;
+
+    // Balanced casino timing:
+    // Phase 1: Quick start (0-150ms)
+    // Phase 2: Balanced spin (150-600ms) 
+    // Phase 3: Smooth deceleration (600-900ms)
+    // Phase 4: Final stop (900-1200ms)
+    
+    // Play start sound
+    playSpinSound('start');
+    
+    reelsEls.forEach((rEl,reelIdx)=>{
+      const st = rEl.querySelector('.strip');
+      const nodes = Array.from(st.children);
+      
+      // Find target position for perfect 5x5 alignment
+      const targetSymbols = visibleGrid[reelIdx];
+      let foundIdx = null;
+      
+      for(let idx=0; idx<nodes.length-4; idx++){
+        let matches = true;
+        for(let row=0; row<ROWS; row++){
+          if(nodes[idx + row].textContent !== targetSymbols[row]){
+            matches = false;
+            break;
+          }
+        }
+        if(matches){
+          foundIdx = idx;
+          break;
+        }
+      }
+      
+      if(foundIdx === null) foundIdx = Math.floor(nodes.length/2);
+      
+      // Store final target position
+      st._finalTarget = -foundIdx * symbolFull;
+      st._currentPhase = 'starting';
+      
+      // Reset any existing animations
+      st.classList.remove('spinning', 'decelerating', 'stopping');
+      
+      // Start spinning with comfortable stagger
+      setTimeout(() => {
+        st.classList.add('spinning');
+        st.style.transform = 'translateY(0px)';
+        st._offset = 0;
+        
+        // Play spinning sound for first reel
+        if(reelIdx === 0) playSpinSound('spinning');
+      }, reelIdx * 70); // Comfortable stagger
+    });
+
+    function animateStep(now){
+      const elapsed = now - start;
+      const progress = Math.min(elapsed / duration, 1);
+      
+      reelsEls.forEach((rEl,reelIdx)=>{
+        const st = rEl.querySelector('.strip');
+        
+        if (elapsed < reelIdx * 70) return; // Wait for staggered start
+        
+        const reelElapsed = elapsed - reelIdx * 70;
+        const reelProgress = Math.min(reelElapsed / (duration - reelIdx * 70), 1);
+        
+        // Balanced phase transitions
+        if (reelElapsed < 150 && st._currentPhase === 'starting') {
+          // Quick start phase - CSS animation handles it
+        } else if (reelElapsed >= 150 && reelElapsed < 600 && st._currentPhase === 'starting') {
+          // Balanced spin
+          st._currentPhase = 'spinning';
+        } else if (reelElapsed >= 600 && reelElapsed < 900 && st._currentPhase === 'spinning') {
+          // Smooth deceleration
+          if(st._reelIdx === 0) playSpinSound('decelerating');
+          st._currentPhase = 'decelerating';
+          st.classList.remove('spinning');
+          st.classList.add('decelerating');
+        } else if (reelElapsed >= 900 && st._currentPhase === 'decelerating') {
+          // Final stop
+          playSpinSound('stop');
+          st._currentPhase = 'stopping';
+          st.classList.remove('decelerating');
+          
+          // Set CSS variable for final position
+          st.style.setProperty('--target-position', `${st._finalTarget}px`);
+          st.classList.add('stopping');
+          
+          // Update symbols to match grid exactly
+          const nodes = Array.from(st.children);
+          const targetSymbols = visibleGrid[reelIdx];
+          const bestIdx = Math.abs(Math.round(st._finalTarget / symbolFull));
+          
+          for(let row=0; row<ROWS; row++){
+            const symbolEl = nodes[bestIdx + row];
+            if(symbolEl){
+              applySymbolToElement(symbolEl, targetSymbols[row]);
+            }
+          }
+        }
+      });
+
+      // If an acceleration was requested while spinning, fast-forward to stop
+      if (!accelerated && window.__accelerateSpinRequested) {
+        accelerated = true;
+        // Immediately move all reels to stopping phase and set final positions
+        reelsEls.forEach((rEl) => {
+          const st = rEl.querySelector('.strip');
+          try {
+            if (st._currentPhase !== 'stopping') {
+              st._currentPhase = 'stopping';
+              st.classList.remove('spinning', 'decelerating');
+              st.classList.add('stopping');
+              st.style.setProperty('--target-position', `${st._finalTarget}px`);
+            }
+            // Update visible symbols immediately to match final grid
+            const nodes = Array.from(st.children);
+            const targetSymbols = visibleGrid[Array.prototype.indexOf.call(reelsEls, rEl)];
+            const symbolH = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--symbol-h')) || 68;
+            const symbolGap = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--symbol-gap')) || 8;
+            const symbolFull = symbolH + symbolGap;
+            const bestIdx = Math.abs(Math.round(st._finalTarget / symbolFull));
+            for(let row=0; row<ROWS; row++){
+              const symbolEl = nodes[bestIdx + row];
+              if(symbolEl){ applySymbolToElement(symbolEl, targetSymbols[row]); }
+            }
+          } catch(e){}
+        });
+
+        // Play stop/completion sounds and finalize after a short delay
+        playSpinSound('stop');
+        setTimeout(()=>{
+          reelsEls.forEach((rEl)=>{
+            const st = rEl.querySelector('.strip');
+            try { st.classList.remove('spinning','decelerating','stopping'); } catch(e){}
+            try { st.style.transform = `translateY(${st._finalTarget}px)`; st._offset = st._finalTarget; } catch(e){}
+          });
+          // clear accelerate flag so next spin is normal
+          window.__accelerateSpinRequested = false;
+          // play completion chime
+          playSpinSound('complete');
+          resolve();
+        }, 80);
+        return;
+      }
+
+      if (progress < 1) {
+        requestAnimationFrame(animateStep);
+      } else {
+        // Play completion sound
+        playSpinSound('complete');
+        
+        // Clean up animations
+        setTimeout(() => {
+          reelsEls.forEach((rEl) => {
+            const st = rEl.querySelector('.strip');
+            st.classList.remove('spinning', 'decelerating', 'stopping');
+            st.style.transform = `translateY(${st._finalTarget}px)`;
+            st._offset = st._finalTarget;
+          });
+          resolve();
+        }, 150);
+      }
+    }
+
+    requestAnimationFrame(animateStep);
+  });
+}
+
+// construct visible grid for full spin result (5 reels × 3 rows)
+function generateVisibleGrid(bias='medium'){
+  const volatility = {low:0.2, medium:0.35, high:0.6, 'very high':0.8}[bias] || 0.35;
+  const grid = [];
+
+  // Get current mode's wild multiplier
+  const wildMultiplier = state.currentMode?.wildMultiplier || 2;
+
+  for(let r=0; r<REELS; r++){
+    const reelCol = [];
+
+    for(let row=0; row<ROWS; row++){
+      // Create weighted array based on symbol properties and current mode
+      const weights = [];
+      let totalWeight = 0;
+
+      // Calculate weights for each symbol
+      for(const symbol of SYMBOLS) {
+        const props = SYMBOL_PROPERTIES[symbol] || { weight: 10, multiplier: 1 };
+        let weight = props.weight;
+
+        // Adjust weights based on volatility and symbol type
+        if (symbol === WILD || symbol === SCATTER) {
+          // Keep wild and scatter weights consistent
+          weight = symbol === WILD ? 3 : 1; // Scatter очень редкий
+        } else if (props.multiplier >= 8) {
+          // High value symbols
+          weight = Math.max(1, Math.floor(weight * (volatility * 0.8)));
+        } else if (props.multiplier <= 3) {
+          // Low value symbols
+          weight = Math.max(5, Math.floor(weight * (1.5 - volatility)));
+        }
+
+        // Adjust for current mode
+        if (state.currentMode === MODES.HADES) {
+          // In Hades mode, increase chance of wilds but keep scatter very rare
+          if (symbol === WILD) {
+            weight = Math.floor(weight * 1.3);
+          } else if (symbol === SCATTER) {
+            weight = Math.max(1, Math.floor(weight * 0.5)); // Еще реже в режиме Hades
+          }
+        }
+        
+        weights.push(weight);
+        totalWeight += weight;
+      }
+      
+      // Select a random symbol based on weights
+      let random = Math.floor(Math.random() * totalWeight);
+      let selectedSymbol = SYMBOLS[0]; // Default fallback
+      
+      for(let i=0; i<SYMBOLS.length; i++) {
+        random -= weights[i];
+        if(random < 0) {
+          selectedSymbol = SYMBOLS[i];
+          break;
+        }
+      }
+      
+      reelCol.push(selectedSymbol);
+    }
+    
+    grid.push(reelCol);
+  }
+  
+  // Debug output for generated grid
+  console.log('Generated grid:');
+  for(let r=0; r<REELS; r++) {
+    console.log(`Reel ${r}: ${grid[r].join(' | ')}`);
+  }
+  
+  return grid;
+}
+
+function launchConfetti(count=50){
+    for(let i=0;i<count;i++){
+      confettiParticles.push({
+        x: Math.random()*confettiCanvas.width,
+        y: -10 - Math.random()*200,
+        size: 6 + Math.random()*10,
+        velX: -2 + Math.random()*4,
+        velY: 2 + Math.random()*6,
+        rot: Math.random()*360,
+        rotSpeed: -6 + Math.random()*12,
+        color: `hsl(${Math.floor(Math.random()*60)+20},85%,55%)`
+      });
+    }
+    if(confettiParticles.length) runConfetti();
+  }
+
+  function animateBonusActivation(isPurchase = false) {
+    const reelsContainer = document.querySelector('.reels');
+    const bonusText = document.createElement('div');
+    bonusText.className = 'bonus-text-popup';
+    bonusText.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10000;
+      pointer-events: none;
+    `;
+    
+    // Внутренний контейнер с текстом
+    const textContent = document.createElement('div');
+    textContent.style.cssText = `
+      font-size: 56px;
+      font-weight: 900;
+      color: #FFD700;
+      text-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
+      text-align: center;
+      line-height: 1.2;
+      padding: 30px 50px;
+      background: rgba(0, 0, 0, 0.85);
+      border: 3px solid rgba(255, 215, 0, 0.7);
+      border-radius: 20px;
+      box-shadow: 0 0 30px rgba(255, 215, 0, 0.6);
+      animation: bonusTextPopup 1.8s ease-out;
+      min-width: 400px;
+      max-width: 600px;
+    `;
+    
+    if (isPurchase) {
+      textContent.innerHTML = `
+        🎉 БОНУС КУПЛЕН! 🎉<br>
+        <span style="font-size: 36px; color: #FFA500;">10 БЕСПЛАТНЫХ СПИНОВ!</span><br>
+        <span style="font-size: 24px; color: #FFFFFF;">Стоимость: ${Number(betInput.value) * 100}₽</span>
+      `;
+    } else {
+      textContent.innerHTML = `
+        ⭐ БОНУСНЫЙ РАУНД! ⭐<br>
+        <span style="font-size: 36px; color: #FFA500;">10 БЕСПЛАТНЫХ СПИНОВ!</span>
+      `;
+    }
+    
+    bonusText.appendChild(textContent);
+    document.body.appendChild(bonusText);
+    
+    // Создаем дополнительный слой для эффекта
+    const overlay = document.createElement('div');
+    overlay.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(circle, rgba(255, 215, 0, 0.1) 0%, transparent 70%);
+      z-index: 9999;
+      pointer-events: none;
+      animation: fadeInOut 2s ease-in-out;
+    `;
+    document.body.appendChild(overlay);
+    
+    // Анимация барабанов
+    if (!isPurchase) {
+      reelsContainer.classList.add('bonus-activation');
+    }
+    
+    // Улучшенные звуковые эффекты
+    playTone(523, 0.15, 'sine', 0.3); // C5
+    setTimeout(() => playTone(659, 0.15, 'sine', 0.3), 150); // E5
+    setTimeout(() => playTone(784, 0.15, 'sine', 0.3), 300); // G5
+    setTimeout(() => playTone(1047, 0.3, 'sine', 0.4), 450); // C6
+    
+    // Дополнительное конфетти для покупки
+    setTimeout(() => {
+      launchConfetti(isPurchase ? 120 : 80);
+    }, 200);
+    
+    // Удаляем элементы через 3 секунды
+    setTimeout(() => {
+      bonusText.remove();
+      overlay.remove();
+    }, 3000);
+    
+    // Добавляем свечение барабанам после анимации
+    if (!isPurchase) {
+      setTimeout(() => {
+        reelsContainer.classList.remove('bonus-activation');
+        reelsContainer.classList.add('bonus-glow');
+      }, 1500);
+    }
+  }
+
+  let confettiRunning = false;
+  function runConfetti(){
+    if(confettiRunning) return;
+    confettiRunning = true;
+    const ctx = confettiCtx;
+    function loop(){
+      ctx.clearRect(0,0,confettiCanvas.width,confettiCanvas.height);
+      for(let i=confettiParticles.length-1;i>=0;i--){
+        const p = confettiParticles[i];
+        p.x += p.velX; p.y += p.velY; p.velY += 0.06; p.rot += p.rotSpeed;
+        ctx.save();
+        ctx.translate(p.x,p.y); ctx.rotate(p.rot*Math.PI/180);
+        ctx.fillStyle = p.color;
+        ctx.fillRect(-p.size/2,-p.size/2,p.size,p.size*0.6);
+        ctx.restore();
+        if(p.y > confettiCanvas.height + 50){ confettiParticles.splice(i,1); }
+      }
+      if(confettiParticles.length){
+        requestAnimationFrame(loop);
+      } else { confettiRunning = false; ctx.clearRect(0,0,confettiCanvas.width,confettiCanvas.height); }
+    }
+    requestAnimationFrame(loop);
+  }
+
+  // Main spin function with enhanced bonus features
+  let spinning = false;
+  async function spinOnce(fromAuto = false) {
+    if (spinning) return;
+    // reset any previous accelerate request when starting a fresh spin
+    try { window.__accelerateSpinRequested = false; } catch(e){}
+    spinning = true;
+    // hide any visible win visuals (banner, lines, confetti, symbol highlights)
+    try { hideWinVisuals(); } catch (e) { /* ignore */ }
+    // clear any previous payline drawings before new spin (redundant safety)
+    try { clearPaylineCanvas(); } catch(e){}
+    
+    const bet = Number(betInput.value);
+    
+    // Validate bet
+    if (isNaN(bet) || bet < MIN_BET || bet > MAX_BET) {
+      showMessage(`Ставка должна быть от ${MIN_BET} до ${MAX_BET}`, 'error');
+      spinning = false;
+      return;
+    }
+    
+    // Check if we have bonus spins to use
+    const isBonusSpin = state.inBonusMode && state.bonusSpins > 0;
+    
+    // Handle balance deduction
+    if (!isBonusSpin) {
+      if (state.balance < bet) {
+        showMessage('Недостаточно средств!', 'error');
+        spinning = false;
+        return;
+      }
+      state.balance -= bet;
+    } else {
+      // Decrement bonus spins counter
+      state.bonusSpins--;
+      if (state.bonusSpins <= 0) {
+        setTimeout(() => endBonusMode(), 2000);
+      }
+    }
+    
+    // Update UI
+    refreshUI();
+    
+    try {
+      // Generate the grid based on current mode
+      const bias = state.currentMode.volatility === 'very high' ? 'high' : 'medium';
+      const grid = generateVisibleGrid(bias);
+      
+      // Animate the spin
+      await animateSpinTo(grid);
+      
+      // Evaluate the result
+      const { win, winningLines } = evaluateGrid(grid, bet);
+      let totalWin = Math.floor(win);
+      
+      // Handle expanding wilds in bonus mode
+      if (state.inBonusMode) {
+        for (let r = 0; r < REELS; r++) {
+          for (let row = 0; row < ROWS; row++) {
+            if (grid[r][row] === WILD) {
+              expandWild(r, row);
+              // Apply wild multiplier
+              const wildKey = `${r}-${row}`;
+              const multiplier = state.bonusWildMultipliers[wildKey] || 1;
+              totalWin = Math.floor(totalWin * multiplier);
+            }
+          }
+        }
+      }
+      
+      // Handle wins
+      if (totalWin > 0) {
+        if (state.inBonusMode) {
+          state.totalBonusWins += totalWin;
+        }
+        
+        // Show enhanced win animation
+        showWinBanner(totalWin, bet);
+        highlightWinningSymbols(winningLines);
+        
+        // Check for random bonus trigger (1 in 50 chance, except in bonus mode)
+        if (!state.inBonusMode && !isBonusSpin && Math.random() < 0.02) {
+          triggerBonus();
+        }
+      }
+      
+      // Check for scatter wins (3+ scatters = free spins)
+      const scatterCount = grid.flat().filter(s => s === SCATTER).length;
+      if (scatterCount >= 3) {
+        const freeSpins = scatterCount === 3 ? 3 : scatterCount === 4 ? 5 : 10;
+        
+        if (!state.inBonusMode) {
+          // Показываем анимацию перед активацией бонуса
+          animateBonusActivation(false);
+          // Активируем бонусный режим после анимации
+          setTimeout(() => {
+            startBonusMode();
+            state.bonusSpins += freeSpins;
+            state.totalFreeSpins += freeSpins;
+            showMessage(`+${freeSpins} бесплатных спинов!`, 'success');
+            refreshUI();
+          }, 500);
+        } else {
+          // Если уже в бонусном режиме, просто добавляем спины
+          state.bonusSpins += freeSpins;
+          state.totalFreeSpins += freeSpins;
+          showMessage(`+${freeSpins} бесплатных спинов!`, 'success');
+        }
+      }
+      
+      // Update state
+      state.totalSpins++;
+      state.lastWin = totalWin;
+      state.totalWon += totalWin;
+      
+      // Track total bet (only for non-bonus spins)
+      if (!isBonusSpin) {
+        state.totalBet += bet;
+      }
+      
+      // Track maximum win amount
+      if (totalWin > state.maxWinAmount) {
+        state.maxWinAmount = totalWin;
+      }
+      
+      // Add to history with bonus indicator
+      const now = new Date();
+      const timeStr = `${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`;
+      state.history.push({
+        time: timeStr,
+        bet: isBonusSpin ? 0 : bet,
+        win: totalWin,
+        isBonus: isBonusSpin
+      });
+      
+      // Keep only last 20 entries
+      if (state.history.length > 20) {
+        state.history = state.history.slice(-20);
+      }
+      
+      // Update balance
+      state.balance += totalWin;
+      
+      // Display win message
+      if (totalWin > 0) {
+        const multiplier = Math.floor(totalWin / bet);
+        let message = `Выигрыш: ${totalWin}₽ (${multiplier}×)`;
+        
+        if (multiplier >= 500) {
+          message = '🎉 SUPER WIN! ' + message;
+        } else if (multiplier >= 100) {
+          message = '🎊 MEGA WIN! ' + message;
+        } else if (multiplier >= 50) {
+          message = '🎈 BIG WIN! ' + message;
+        }
+        
+        showMessage(message, 'success');
+      } else {
+        showMessage(isBonusSpin ? 'Бонусный спин завершен' : 'Попробуйте еще раз!', 'info');
+      }
+      
+      // Continue auto-spin if enabled
+      if (state.autoSpinning && (state.inBonusMode || state.balance >= bet)) {
+        setTimeout(() => spinOnce(true), 800);
+      } else if (state.autoSpinning) {
+        // Stop auto-spin if we can't continue
+        stopAuto();
+        showMessage('Автоспин остановлен: недостаточно средств', 'warning');
+      }
+    } catch (error) {
+      console.error('Error during spin:', error);
+      showMessage('Произошла ошибка во время спина', 'error');
+    } finally {
+      spinning = false;
+      refreshUI();
+    }
+  }
+
+  // Bonus system functions
+  function triggerBonus() {
+    startBonusMode();
+    showMessage('🎉 СЛУЧАЙНЫЙ БОНУС! 10 бесплатных спинов!', 'success');
+    playTone(880, 0.3, 'sine', 0.15);
+  }
+
+  function playBonusSound() {
+    try {
+      const audio = new Audio('audio/bonus.ogg');
+      audio.volume = 0.7;
+      
+      // Пробуем воспроизвести звук
+      const playPromise = audio.play();
+      
+      if (playPromise !== undefined) {
+        playPromise.then(() => {
+          console.log('Звук бонуса успешно воспроизведен');
+        }).catch(error => {
+          console.log('Ошибка воспроизведения звука бонуса:', error);
+          // Если автоплей заблокирован, пробуем воспроизвести после клика
+          document.addEventListener('click', function playSoundAfterClick() {
+            audio.play().catch(e => console.log('Ошибка после клика:', e));
+            document.removeEventListener('click', playSoundAfterClick);
+          }, { once: true });
+        });
+      }
+    } catch (error) {
+      console.log('Ошибка создания аудио объекта:', error);
+    }
+  }
+
+  function buyBonus() {
+    const bet = Number(betInput.value);
+    const cost = bet * 100;
+    
+    if (state.balance < cost) {
+      showMessage('Недостаточно средств для покупки бонуса!', 'error');
+      return;
+    }
+    
+    // Сначала списываем средства
+    state.balance -= cost;
+    refreshUI();
+    
+    // Воспроизводим звук покупки бонуса
+    playBonusSound();
+    
+    // Показываем анимацию покупки
+    animateBonusActivation(true);
+    
+    // Запускаем бонусный режим после анимации
+    setTimeout(() => {
+      startBonusMode();
+    }, 500);
+  }
+
+  function startBonusMode() {
+    state.inBonusMode = true;
+    state.bonusRoundActive = true;
+    state.bonusSpins = 10;
+    state.expandedWilds = [];
+    state.bonusWildMultipliers = {};
+    
+    // Добавляем визуальный эффект для барабанов
+    const reelsContainer = document.querySelector('.reels');
+    reelsContainer.classList.add('bonus-mode');
+    
+    refreshUI();
+  }
+
+  function expandWild(reelIndex, rowIndex) {
+    const wildKey = `${reelIndex}-${rowIndex}`;
+    if (!state.expandedWilds.includes(wildKey)) {
+      state.expandedWilds.push(wildKey);
+      // Random multiplier between 2x and 100x
+      const multiplier = Math.floor(Math.random() * 99) + 2;
+      state.bonusWildMultipliers[wildKey] = multiplier;
+      
+      // Visual effect for expanding wild
+      const reelEl = reelsEls[reelIndex];
+      const strip = reelEl.querySelector('.strip');
+      // Map logical (reel,row) to currently visible DOM element
+      const symbolEl = getVisibleSymbolElement(reelIndex, rowIndex);
+      
+      if (symbolEl) {
+        symbolEl.classList.add('expanded-wild');
+        
+        // Add multiplier display
+        const multiplierEl = document.createElement('div');
+        multiplierEl.className = 'wild-multiplier';
+        multiplierEl.textContent = `${multiplier}x`;
+        multiplierEl.style.position = 'absolute';
+        multiplierEl.style.top = '2px';
+        multiplierEl.style.right = '2px';
+        multiplierEl.style.fontSize = '12px';
+        multiplierEl.style.fontWeight = 'bold';
+        multiplierEl.style.color = '#FFD700';
+        multiplierEl.style.background = 'rgba(0,0,0,0.7)';
+        multiplierEl.style.padding = '2px 4px';
+        multiplierEl.style.borderRadius = '4px';
+        symbolEl.appendChild(multiplierEl);
+      }
+      
+      playTone(1000, 0.2, 'sine', 0.3);
+    }
+  }
+
+  function endBonusMode() {
+    if (state.bonusRoundActive) {
+      state.inBonusMode = false;
+      state.bonusRoundActive = false;
+      state.expandedWilds = [];
+      state.bonusWildMultipliers = {};
+      
+      // Убираем визуальные эффекты с барабанов
+      const reelsContainer = document.querySelector('.reels');
+      reelsContainer.classList.remove('bonus-mode', 'bonus-glow');
+      // Also remove any expanded wild visuals left on symbol elements
+      try {
+        reelsEls.forEach(reelEl => {
+          const strip = reelEl.querySelector('.strip');
+          if (!strip) return;
+          Array.from(strip.children).forEach(symbolEl => {
+            if (symbolEl.classList.contains('expanded-wild')) {
+              symbolEl.classList.remove('expanded-wild');
+              // Reset inline styles applied by expandWild
+              symbolEl.style.background = '';
+              symbolEl.style.boxShadow = '';
+              // Remove any multiplier badges
+              const badges = symbolEl.querySelectorAll('.wild-multiplier');
+              badges.forEach(b => b.remove());
+            }
+          });
+        });
+      } catch (e) {
+        console.error('Failed to clean expanded wild visuals:', e);
+      }
+      
+      showMessage(`Бонусный раунд завершен! Общий выигрыш: ${state.totalBonusWins}₽`, 'info');
+      state.totalBonusWins = 0;
+      playTone(400, 0.4, 'triangle', 0.15);
+      refreshUI();
+    }
+  }
+
+  // Show win banner with confetti animation
+  function showWinBanner(amount, bet = 100) {
+    if (amount <= 0) return;
+    
+    const banner = document.getElementById('win-banner');
+    const sumEl = document.getElementById('win-sum');
+    const multiplier = Math.floor(amount / bet);
+    
+    // Determine win level
+    let winLevel = '';
+    let bannerColor = '';
+    let confettiCount = 30;
+    
+    if (multiplier >= 500) {
+      winLevel = 'SUPER WIN!';
+      bannerColor = 'linear-gradient(180deg, #ff006e, #ff4081)';
+      confettiCount = 150;
+      state.superWins++;
+    } else if (multiplier >= 100) {
+      winLevel = 'MEGA WIN!';
+      bannerColor = 'linear-gradient(180deg, #7c4dff, #b388ff)';
+      confettiCount = 100;
+      state.megaWins++;
+    } else if (multiplier >= 50) {
+      winLevel = 'BIG WIN!';
+      bannerColor = 'linear-gradient(180deg, #ffd36b, #ffcc33)';
+      confettiCount = 60;
+      state.bigWins++;
+    } else if (multiplier >= 10) {
+      winLevel = 'NICE WIN!';
+      bannerColor = 'linear-gradient(180deg, #8ef58e, #69f0ae)';
+      confettiCount = 40;
+    }
+    
+    // Update banner content
+    banner.querySelector('div').textContent = winLevel || '🎉 ВЫ ВЫИГРАЛИ';
+    sumEl.textContent = `${amount} ₽ (${multiplier}×)`;
+    
+    // Apply special styling for big wins
+    if (winLevel) {
+      banner.style.background = bannerColor;
+      banner.style.color = '#fff';
+      banner.style.border = `6px solid ${winLevel === 'SUPER WIN!' ? '#ff006e' : winLevel === 'MEGA WIN!' ? '#7c4dff' : '#ffd36b'}`;
+      sumEl.style.color = '#fff';
+      sumEl.style.textShadow = '0 0 20px rgba(255, 215, 0, 0.8)';
+    } else {
+      banner.style.background = 'linear-gradient(180deg,#fff7df,#fff0b8)';
+      banner.style.color = '#2b1700';
+      banner.style.border = '6px solid #fff';
+      sumEl.style.color = '#2b1700';
+      sumEl.style.textShadow = '0 6px 18px rgba(124,77,255,0.08)';
+    }
+    
+    banner.style.display = 'block';
+    
+    // Show banner with animation
+    setTimeout(() => {
+      banner.style.transform = 'translate(-50%, -50%) scale(1)';
+      banner.style.opacity = '1';
+    }, 100);
+    
+    // Launch confetti based on win amount
+    launchConfetti(confettiCount);
+    
+    // Play celebration sound (more dramatic for bigger wins)
+    if (winLevel === 'SUPER WIN!' || winLevel === 'MEGA WIN!') {
+      playTone(523, 0.2, 'sine', 0.3);
+      setTimeout(() => playTone(659, 0.2, 'sine', 0.3), 200);
+      setTimeout(() => playTone(784, 0.3, 'sine', 0.4), 400);
+      setTimeout(() => playTone(1047, 0.3, 'sine', 0.5), 600);
+    } else {
+      playTone(523, 0.15, 'sine', 0.2);
+      setTimeout(() => playTone(659, 0.15, 'sine', 0.2), 150);
+      setTimeout(() => playTone(784, 0.2, 'sine', 0.3), 300);
+    }
+    
+    // Hide banner after delay
+    setTimeout(() => {
+      banner.style.transform = 'translate(-50%, -50%) scale(0.8)';
+      banner.style.opacity = '0';
+      setTimeout(() => {
+        banner.style.display = 'none';
+      }, 300);
+    }, winLevel ? 4000 : 3000);
+  }
+
+  // Hide any visible win visuals immediately: banner, payline canvas, confetti, and temporary symbol highlights
+  function hideWinVisuals() {
+    try {
+      // Cancel any running payline animations and clear canvas
+      try { cancelPaylineAnimations(); } catch(e){}
+
+      const banner = document.getElementById('win-banner');
+      if (banner) {
+        banner.style.display = 'none';
+        banner.style.opacity = '0';
+        banner.style.transform = 'translate(-50%, -50%) scale(0.8)';
+      }
+
+      // Clear confetti particles and canvas
+      try {
+        confettiParticles = [];
+        if (confettiCtx && confettiCanvas) {
+          confettiCtx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+        }
+      } catch (e) { /* ignore */ }
+
+      // Remove temporary win highlight styles from symbols
+      try {
+        document.querySelectorAll('.symbol.win').forEach(el => {
+          el.classList.remove('win');
+          el.style.animation = '';
+          el.style.transform = '';
+          el.style.filter = '';
+        });
+        // Also remove expanded wild visuals and multiplier badges left over
+        document.querySelectorAll('.symbol.expanded-wild').forEach(el => {
+          el.classList.remove('expanded-wild');
+          el.style.background = '';
+          el.style.boxShadow = '';
+        });
+        document.querySelectorAll('.wild-multiplier').forEach(b => b.remove());
+      } catch (e) { /* ignore */ }
+    } catch (e) {
+      // Defensive: ignore any errors
+    }
+  }
+
+  // Highlight winning symbols with enhanced glow effect
+  function highlightWinningSymbols(winningLines) {
+    winningLines.forEach(line => {
+      line.positions.forEach(pos => {
+        const reelEl = reelsEls[pos.reel];
+        const strip = reelEl.querySelector('.strip');
+        // Map logical (reel,row) to currently visible DOM element
+        const symbolEl = getVisibleSymbolElement(pos.reel, pos.row);
+        
+        if (symbolEl) {
+          symbolEl.classList.add('win');
+          
+          // Enhanced glow effect
+          symbolEl.style.animation = 'winGlow 900ms ease-in-out infinite';
+          symbolEl.style.transform = 'scale(1.05)';
+          symbolEl.style.filter = 'brightness(1.2) saturate(1.3) drop-shadow(0 0 20px rgba(255, 215, 0, 0.8)) drop-shadow(0 4px 16px rgba(255, 165, 0, 0.5))';
+          
+          // Remove effect after animation
+          setTimeout(() => {
+            symbolEl.classList.remove('win');
+            symbolEl.style.animation = '';
+            symbolEl.style.transform = '';
+            symbolEl.style.filter = '';
+          }, 2000);
+        }
+      });
+    });
+    // Draw payline overlays for the winning lines (visual only)
+    try {
+      drawWinningLines(winningLines);
+    } catch (e) {
+      console.error('Failed to draw winning lines:', e);
+    }
+  }
+
+  function saveState() {
+    const saveData = {
+      balance: state.balance,
+      totalSpins: state.totalSpins,
+      totalWon: state.totalWon,
+      history: state.history,
+      bonusSpins: state.bonusSpins,
+      inBonusMode: state.inBonusMode,
+      mode: state.mode,
+      expandedWilds: state.expandedWilds,
+      bonusWildMultipliers: state.bonusWildMultipliers
+    };
+    localStorage.setItem('slotGameState', JSON.stringify(saveData));
+  }
+
+  // Draw SVG polylines over the reels for winning lines (visual only)
+  function drawWinningLines(winningLines) {
+    // Canvas-based implementation: draw polylines (segment-by-segment) connecting each symbol center
+    const reelsContainer = document.getElementById('reels');
+    if (!reelsContainer || !winningLines || winningLines.length === 0) return;
+
+    // Ensure canvas is initialized
+    setupPaylineCanvas();
+    const canvas = document.getElementById('payline-canvas');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const containerRect = reelsContainer.getBoundingClientRect();
+
+    // Compute centers for each line
+    const lines = winningLines.map(line => {
+      const pts = [];
+      line.positions.forEach(pos => {
+        const reelEl = reelsEls[pos.reel];
+        if (!reelEl) return;
+        const strip = reelEl.querySelector('.strip');
+        const symbolEl = getVisibleSymbolElement(pos.reel, pos.row);
+        if (!symbolEl) return;
+        const r = symbolEl.getBoundingClientRect();
+        const x = r.left + r.width / 2 - containerRect.left;
+        const y = r.top + r.height / 2 - containerRect.top;
+        pts.push({x,y});
+      });
+      return { meta: line, pts };
+    }).filter(l => l.pts.length >= 2);
+
+    // Clear previous drawings and cancel any running payline animations
+    try { cancelPaylineAnimations(); } catch(e){}
+
+    // Draw all lines SIMULTANEOUSLY - no sequential delay
+    lines.forEach((lineObj, idx) => {
+      const controller = { cancelled: false };
+      paylineControllers.push(controller);
+      drawWinningLine(lineObj.pts, {ctx, simultaneous: true, controller});
+    });
+    
+    // Keep lines visible until next spin (no auto-clear)
+    // Lines will be cleared only when clearPaylineCanvas() is called before next spin
+  }
+
+  function loadState() {
+    const saved = localStorage.getItem('slotGameState');
+    if (saved) {
+      try {
+        const data = JSON.parse(saved);
+        Object.assign(state, data);
+        state.currentMode = MODES[state.mode] || MODES.ZEUS;
+        refreshUI();
+      } catch (e) {
+        console.error('Failed to load saved state:', e);
+      }
+    }
+  }
+
+  // --- Payline canvas helpers ---
+  // Controllers for running payline animations so they can be cancelled
+  let paylineControllers = [];
+
+  function cancelPaylineAnimations(){
+    try{
+      paylineControllers.forEach(c => { try { c.cancelled = true; } catch(e){} });
+    }catch(e){}
+    paylineControllers = [];
+    try { clearPaylineCanvas(); } catch(e){}
+  }
+  function setupPaylineCanvas(){
+    const reelsContainer = document.getElementById('reels');
+    const canvas = document.getElementById('payline-canvas');
+    if (!reelsContainer || !canvas) return;
+    // Size canvas to container with devicePixelRatio handling
+    const rect = reelsContainer.getBoundingClientRect();
+    const dpr = window.devicePixelRatio || 1;
+    // Use rounded device pixels to avoid subpixel blurring and ensure clipping matches container
+    canvas.style.width = Math.round(rect.width) + 'px';
+    canvas.style.height = Math.round(rect.height) + 'px';
+    canvas.width = Math.round(rect.width * dpr);
+    canvas.height = Math.round(rect.height * dpr);
+    const ctx = canvas.getContext('2d');
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.clearRect(0,0,rect.width,rect.height);
+  }
+
+  function clearPaylineCanvas(){
+    const canvas = document.getElementById('payline-canvas');
+    if (!canvas) return;
+    const rect = canvas.getBoundingClientRect();
+    const dpr = window.devicePixelRatio || 1;
+    const ctx = canvas.getContext('2d');
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    ctx.clearRect(0,0,rect.width,rect.height);
+  }
+
+  // Draw a single winning line (pts: [{x,y},...]) with animated stroke-draw
+  function drawWinningLine(pts, opts={}){
+    const canvas = document.getElementById('payline-canvas');
+    if (!canvas || !pts || pts.length < 2) return Promise.resolve();
+    const ctx = opts.ctx || canvas.getContext('2d');
+    // support cancellation via controller
+    const controller = opts.controller || { cancelled: false };
+    // register controller so external callers can cancel
+    if (!opts.controller) paylineControllers.push(controller);
+    const totalSegments = pts.length - 1;
+    const segDur = opts.simultaneous ? 150 : 280; // Faster for simultaneous
+    const totalDur = totalSegments * segDur;
+
+    return new Promise(resolve => {
+      let start = null;
+      function step(ts){
+        if (controller.cancelled) {
+          // ensure canvas cleared and resolve early
+          try { ctx.clearRect(0,0,canvas.width,canvas.height); } catch(e){}
+          // remove from controllers list
+          try { paylineControllers = paylineControllers.filter(c=>c!==controller); } catch(e){}
+          resolve();
+          return;
+        }
+        if (!start) start = ts;
+        const elapsed = ts - start;
+        // clear canvas while keeping other lines (we intentionally redraw everything each frame)
+        if (!opts.simultaneous) {
+          clearPaylineCanvas();
+        }
+
+        // clip drawing to canvas/game area so lines never go outside
+        ctx.save();
+        try {
+          const dpr = window.devicePixelRatio || 1;
+          const w = canvas.width / dpr;
+          const h = canvas.height / dpr;
+          ctx.beginPath();
+          ctx.rect(0,0,w,h);
+          ctx.clip();
+        } catch(e) { /* ignore clipping errors */ }
+
+        // Draw already completed segments fully, and current partially
+        const progress = Math.min(1, elapsed / totalDur);
+        const fullSegments = Math.floor(progress * totalSegments);
+        const segmentProgress = (progress * totalSegments) - fullSegments;
+
+        // styling
+        ctx.lineWidth = 6;
+        ctx.strokeStyle = 'rgba(255,215,80,0.98)';
+        ctx.shadowBlur = 18;
+        ctx.shadowColor = 'rgba(255,200,60,0.9)';
+
+        ctx.beginPath();
+        // draw full segments
+        for(let i=0;i<fullSegments;i++){
+          const a = pts[i];
+          const b = pts[i+1];
+          if(i===0){ ctx.moveTo(a.x, a.y); }
+          ctx.lineTo(b.x, b.y);
+        }
+        // draw current partial segment
+        if(fullSegments < totalSegments){
+          const a = pts[fullSegments];
+          const b = pts[fullSegments+1];
+          if(fullSegments===0) ctx.moveTo(a.x,a.y);
+          const cx = a.x + (b.x - a.x) * segmentProgress;
+          const cy = a.y + (b.y - a.y) * segmentProgress;
+          ctx.lineTo(cx, cy);
+        }
+        ctx.stroke();
+
+        if(elapsed < totalDur + (opts.simultaneous ? 5000 : 200)){ // Keep visible much longer for simultaneous
+          requestAnimationFrame(step);
+        } else {
+          // For simultaneous mode, don't fade out - keep lines visible
+          if (opts.simultaneous) {
+            // done for this line
+            try { paylineControllers = paylineControllers.filter(c=>c!==controller); } catch(e){}
+            resolve();
+          } else {
+            // Fade out effect for sequential mode
+            const fadeStart = performance.now();
+            const fadeDur = 600;
+            function fade(now){
+              if (controller.cancelled) {
+                try { paylineControllers = paylineControllers.filter(c=>c!==controller); } catch(e){}
+                resolve();
+                return;
+              }
+              const t = Math.min(1, (now - fadeStart)/fadeDur);
+              // draw final full line with reduced alpha
+              clearPaylineCanvas();
+              ctx.lineWidth = 6;
+              ctx.shadowBlur = 18*(1-t);
+              ctx.shadowColor = `rgba(255,200,60,${0.9*(1-t)})`;
+              ctx.beginPath();
+              ctx.moveTo(pts[0].x, pts[0].y);
+              for(let i=1;i<pts.length;i++) ctx.lineTo(pts[i].x, pts[i].y);
+              ctx.strokeStyle = `rgba(255,215,80,${1-t})`;
+              ctx.stroke();
+              if(t<1) requestAnimationFrame(fade); else { clearPaylineCanvas(); try { paylineControllers = paylineControllers.filter(c=>c!==controller); } catch(e){}; resolve(); }
+            }
+            requestAnimationFrame(fade);
+          }
+        }
+        try { ctx.restore(); } catch(e){}
+      }
+      requestAnimationFrame(step);
+    });
+  }
+
+  // Draw multiple winning lines; supports sequential drawing
+  function drawWinningLinesCanvas(winningLines){
+    if(!winningLines || !winningLines.length) return;
+    const reelsContainer = document.getElementById('reels');
+    const containerRect = reelsContainer.getBoundingClientRect();
+    const linesPts = winningLines.map(line => {
+      const pts = [];
+      line.positions.forEach(pos => {
+        const reelEl = reelsEls[pos.reel];
+        if (!reelEl) return;
+        const strip = reelEl.querySelector('.strip');
+        const symbolEl = getVisibleSymbolElement(pos.reel, pos.row);
+        if (!symbolEl) return;
+        const r = symbolEl.getBoundingClientRect();
+        const cx = r.left + r.width/2 - containerRect.left;
+        const cy = r.top + r.height/2 - containerRect.top;
+        // include only points whose centers are strictly inside the reels container
+        if (cx >= 0 && cy >= 0 && cx <= containerRect.width && cy <= containerRect.height) {
+          pts.push({x: cx, y: cy});
+        }
+      });
+      return pts;
+    }).filter(p=>p && p.length>=2);
+
+    // sequential draw
+    (async ()=>{
+      for(const pts of linesPts){
+        // create a controller for this line so it can be cancelled
+        const controller = { cancelled: false };
+        paylineControllers.push(controller);
+        await drawWinningLine(pts, { controller });
+        if (controller.cancelled) break;
+        // small pause between lines
+        await new Promise(r=>setTimeout(r, 180));
+      }
+      // clear controllers after done
+      paylineControllers = [];
+    })();
+  }
+
+  // Public compatibility wrapper: existing callers use drawWinningLines(winningLines)
+  const origDrawWinningLines = window.drawWinningLines;
+  function drawWinningLinesWrapper(winningLines){
+    // prefer canvas implementation
+    setupPaylineCanvas();
+    // Cancel any running animations from previous spins
+    try { cancelPaylineAnimations(); } catch(e){}
+    drawWinningLinesCanvas(winningLines);
+  }
+  // Replace the global reference used in other functions
+  window.drawWinningLines = drawWinningLinesWrapper;
+  // Also update local binding so existing calls resolve to the wrapper
+  try { drawWinningLines = drawWinningLinesWrapper; } catch(e){}
+
+  // checkLines: wrapper around evaluateGrid to return winning lines (keeps API requested)
+  function checkLines(grid, bet){
+    const res = evaluateGrid(grid, bet || Number(betInput.value));
+    return res.winningLines || [];
+  }
+
+  // highlightSymbols for a single line (applies same style used previously)
+  function highlightSymbols(line){
+    if(!line || !line.positions) return;
+    line.positions.forEach(pos => {
+      const reelEl = reelsEls[pos.reel];
+      const strip = reelEl.querySelector('.strip');
+      const symbolEl = getVisibleSymbolElement(pos.reel, pos.row);
+      if(symbolEl){
+        symbolEl.classList.add('win');
+        symbolEl.style.animation = 'winGlow 900ms ease-in-out infinite';
+        symbolEl.style.transform = 'scale(1.05)';
+        symbolEl.style.filter = 'brightness(1.2) saturate(1.3) drop-shadow(0 0 20px rgba(255, 215, 0, 0.8)) drop-shadow(0 4px 16px rgba(255, 165, 0, 0.5))';
+        setTimeout(()=>{
+          symbolEl.classList.remove('win');
+          symbolEl.style.animation=''; symbolEl.style.transform=''; symbolEl.style.filter='';
+        }, 2000);
+      }
+    });
+  }
+
+  // Auto-spin functions
+  function startAuto() {
+    if (state.autoSpinning) return;
+    
+    const bet = Number(betInput.value);
+    if (state.balance < bet && !state.inBonusMode) {
+      showMessage('Недостаточно средств для автоспина!', 'error');
+      return;
+    }
+    
+    state.autoSpinning = true;
+    autoBtn.textContent = 'STOP';
+    autoBtn.style.background = 'linear-gradient(90deg, #ff6b6b, #ff8787)';
+    showMessage('Автоспин запущен', 'info');
+    
+    // Start first spin
+    spinOnce(true);
+  }
+
+  function stopAuto() {
+    state.autoSpinning = false;
+    autoBtn.textContent = 'AUTO';
+    autoBtn.style.background = '';
+    showMessage('Автоспин остановлен', 'info');
+  }
+
+  // Show message to user
+  function showMessage(text, type = 'info') {
+    messageEl.textContent = text;
+    messageEl.className = 'message';
+    
+    // Add color based on type
+    if (type === 'error') {
+      messageEl.style.background = 'rgba(255, 107, 107, 0.2)';
+      messageEl.style.color = '#ff6b6b';
+      messageEl.style.border = '1px solid rgba(255, 107, 107, 0.3)';
+    } else if (type === 'success') {
+      messageEl.style.background = 'rgba(142, 245, 142, 0.2)';
+      messageEl.style.color = '#8ef58e';
+      messageEl.style.border = '1px solid rgba(142, 245, 142, 0.3)';
+    } else if (type === 'warning') {
+      messageEl.style.background = 'rgba(255, 193, 7, 0.2)';
+      messageEl.style.color = '#ffc107';
+      messageEl.style.border = '1px solid rgba(255, 193, 7, 0.3)';
+    } else {
+      messageEl.style.background = 'rgba(0, 0, 0, 0.25)';
+      messageEl.style.color = 'var(--muted)';
+      messageEl.style.border = 'none';
+    }
+    
+    // Clear message after delay
+    setTimeout(() => {
+      if (messageEl.textContent === text) {
+        messageEl.textContent = 'Готов к следующему спину!';
+        messageEl.style.background = 'rgba(0, 0, 0, 0.25)';
+        messageEl.style.color = 'var(--muted)';
+        messageEl.style.border = 'none';
+      }
+    }, 3000);
+  }
+
+  // Initialize the game
+  function init() {
+    // Initialize confetti canvas size
+    confettiCanvas.width = window.innerWidth;
+    confettiCanvas.height = window.innerHeight;
+    // Initialize payline canvas sizing
+    setupPaylineCanvas();
+    window.addEventListener('resize', () => {
+      confettiCanvas.width = window.innerWidth;
+      confettiCanvas.height = window.innerHeight;
+      // resize payline canvas too
+      setupPaylineCanvas();
+    });
+    
+    // Initialize background music
+    initBackgroundMusic();
+    
+    // Load saved state
+    loadState();
+    
+    // Set up event listeners
+    spinBtn.addEventListener('click', () => {
+      if (spinning) {
+        // User pressed spin while spinning -> request acceleration
+        try { window.__accelerateSpinRequested = true; } catch(e){}
+      } else {
+        spinOnce();
+      }
+    });
+    autoBtn.addEventListener('click', () => state.autoSpinning ? stopAuto() : startAuto());
+    
+    // Ad banner click handler
+    const adBanner = document.querySelector('.ad-banner-side img');
+    if (adBanner) {
+      adBanner.addEventListener('click', () => {
+        // Track ad click (you can add analytics here)
+        console.log('Side ad banner clicked');
+        // Open ad link in new tab (replace with actual URL)
+        // window.open('https://your-ad-link.com', '_blank');
+      });
+    }
+    
+    // Buy bonus button
+    const buyBonusBtn = document.getElementById('buy-bonus');
+    if (buyBonusBtn) {
+      buyBonusBtn.addEventListener('click', buyBonus);
+    }
+    
+    // Bet controls
+    incBtn.addEventListener('click', () => {
+      const newBet = Math.min(MAX_BET, Number(betInput.value) + 10);
+      betInput.value = newBet;
+      refreshUI();
+    });
+    
+    decBtn.addEventListener('click', () => {
+      const newBet = Math.max(MIN_BET, Number(betInput.value) - 10);
+      betInput.value = newBet;
+      refreshUI();
+    });
+    
+    // Export JSON button
+    exportBtn.addEventListener('click', () => {
+      const dataStr = JSON.stringify(state, null, 2);
+      const dataBlob = new Blob([dataStr], {type: 'application/json'});
+      const url = URL.createObjectURL(dataBlob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `slot-history-${new Date().toISOString().slice(0,10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      showMessage('History exported', 'success');
+    });
+    
+    // Clear history button
+    const clearHistoryBtn = document.getElementById('clear-history');
+    if (clearHistoryBtn) {
+      clearHistoryBtn.addEventListener('click', () => {
+        if (confirm('Clear all history? This cannot be undone.')) {
+          state.history = [];
+          state.bigWins = 0;
+          state.megaWins = 0;
+          state.superWins = 0;
+          state.maxWinAmount = 0;
+          localStorage.setItem('history', JSON.stringify(state.history));
+          localStorage.setItem('bigWins', state.bigWins);
+          localStorage.setItem('megaWins', state.megaWins);
+          localStorage.setItem('superWins', state.superWins);
+          localStorage.setItem('maxWinAmount', state.maxWinAmount);
+          refreshUI();
+          showMessage('History cleared', 'info');
+        }
+      });
+    }
+    
+    // Reset button
+    resetBtn.addEventListener('click', () => {
+      if (confirm('Сбросить баланс и историю?')) {
+        state.balance = 1000;
+        state.totalSpins = 0;
+        state.totalWon = 0;
+        state.history = [];
+        state.bonusSpins = 0;
+        state.inBonusMode = false;
+        state.expandedWilds = [];
+        state.bonusWildMultipliers = {};
+        localStorage.clear();
+        refreshUI();
+        showMessage('Игра сброшена', 'info');
+      }
+    });
+    
+    // Sound toggle button
+    muteBtn.addEventListener('click', () => {
+      muted = !muted;
+      muteBtn.textContent = muted ? '🔇' : '🔊';
+      muteBtn.setAttribute('aria-pressed', muted);
+      if (!muted) {
+        playTone(600, 0.1, 'sine', 0.1); // Test sound
+      }
+    });
+    
+    // Music toggle button
+    musicToggleBtn.addEventListener('click', toggleBackgroundMusic);
+    
+    // Music volume slider
+    musicVolumeSlider.addEventListener('input', (e) => {
+      const volume = e.target.value / 100;
+      setMusicVolume(volume);
+    });
+    
+    // Keyboard controls
+    document.addEventListener('keydown', (e) => {
+      if (e.code === 'Space') {
+        e.preventDefault();
+        if (!spinning) {
+          spinOnce();
+        } else {
+          try { window.__accelerateSpinRequested = true; } catch(e){}
+        }
+      } else if (e.code === 'KeyA' && !spinning) {
+        e.preventDefault();
+        state.autoSpinning ? stopAuto() : startAuto();
+      } else if (e.code === 'KeyB' && !spinning) {
+        e.preventDefault();
+        buyBonus();
+      }
+    });
+    
+    // Initial UI update
+    refreshUI();
+    showMessage('Добро пожаловать в o block slot!', 'info');
+  }
+
+  // Start the game
+  init();
+})();
+</script>
+</body>
+</html>
