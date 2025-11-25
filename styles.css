@@ -15,7 +15,23 @@
 }
 /* Mobile-first reset */
 *{box-sizing:border-box}
-html,body{height:100%;margin:0;font-family:'Montserrat',system-ui,-apple-system,Segoe UI,Roboto,'Helvetica Neue',Arial;background:linear-gradient(135deg, #0b0820 0%, #1a1642 25%, #2d1b69 40%, #1a1642 60%, #0f0c29 80%, #0b0820 100%);background-size: cover;background-position: center;background-attachment: fixed;color:#e6e9f2;display:flex;align-items:center;justify-content:center;padding:0;min-height:100vh;overflow-x:hidden}
+html,body{height:100%;margin:0;font-family:'Times New Roman', Times, serif;background:linear-gradient(135deg, #0b0820 0%, #1a1642 25%, #2d1b69 40%, #1a1642 60%, #0f0c29 80%, #0b0820 100%);background-size: cover;background-position: center;background-attachment: fixed;color:#e6e9f2;display:flex;align-items:center;justify-content:center;padding:0;min-height:100vh;overflow-x:hidden}
+
+/* Headers and special elements keep Montserrat */
+h1, h2, h3, h4, h5, h6,
+.brand, .stat, .win-banner, .win-banner .sum,
+.sidebar-title, .modal-title, .btn, .bet-btn,
+#bet, #balance, #total-spins, #total-won, #total-profit,
+#bonus-spins, #last-win, #buy-bonus, #spin-text,
+#auto-spins, #max-bet, #min-bet, #max-bet-value,
+.bonus-text, .bonus-title, .bonus-cost {
+  font-family: 'Montserrat', sans-serif;
+}
+
+/* Buttons and inputs */
+button, input, select, textarea, .btn, .bet-btn, .line-pill {
+  font-family: 'Montserrat', sans-serif;
+}
 /* Animated smoke background */
 body::before{
   content: '';
