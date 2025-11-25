@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Дымоход</title>
+
+  <!-- Prototype for demo; not for real-money gambling -->
+  <!-- Fonts: Montserrat for all text -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div class="stage" role="application" aria-label="Prototype slot game">
+  <!-- Left panel -->
+  <aside class="side" aria-hidden="false">
+    <div class="brand">Дымоход</div>
+    <div class="small">Balance</div>
+    <div class="balance" aria-live="polite">
+      <div class="amount" id="balance">1000</div>
+      <div class="small">₽</div>
+    </div>
+    <div class="bonus-panel" style="margin-top: 12px; text-align: center;">
+      <div class="small">Bonus Spins</div>
+      <div class="stat" id="bonus-spins">0</div>
+    </div>
+
+    <div class="panel-row"><div class="small">Min Bet</div><div class="stat" id="min-bet">10</div></div>
+    <div class="panel-row"><div class="small">Max Bet</div><div class="stat" id="max-bet">10000</div></div>
+
+    <div style="margin-top:16px">
+      <div class="small">History (last 20)</div>
+      <div class="history-container" style="max-height:300px;overflow-y:auto;margin-top:8px;border:none;border-radius:8px;background:#0b0820">
+        <ol id="history" style="padding-left:18px;margin:0;color:var(--muted);font-size:12px;list-style-position:inside"></ol>
+      </div>
+      <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">
+        <button id="export-json" class="btn" title="Export history">Export JSON</button>
+        <button id="clear-history" class="btn" title="Clear history" style="background:rgba(255,107,107,0.1);color:#ff6b6b;border:1px solid rgba(255,107,107,0.2)">Clear</button>
+      </div>
+    </div>
+    <div style="margin-top:8px;display:flex;gap:8px">
+      <button id="reset" class="btn" title="Reset balance">Reset</button>
+    </div>
+  </aside>
+
+  <!-- Main card -->
+  <main class="card" role="main">
+    <div class="header">
+      <div>
+        <div class="title">Дымоход 5×5</div>
+        <div class="subtitle">Enhanced 5×5 Slot — 25 Paylines, Bonus Game, Wild & Scatter</div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button id="mute" class="btn" aria-pressed="false" aria-label="Toggle sound">🔊</button>
+        <button id="music-toggle" class="btn" aria-pressed="false" aria-label="Toggle background music">🎵</button>
+        <div style="display:flex;align-items:center;gap:6px">
+          <span style="font-size:12px;color:var(--muted)">🎶</span>
+          <input type="range" id="music-volume" min="0" max="100" value="30" 
+                 style="width:60px;height:4px;background:rgba(255,255,255,0.1);border-radius:2px;outline:none"
+                 aria-label="Music volume">
+        </div>
+        <div style="text-align:right">
+          <div class="small">Volatility</div>
+          <select id="vol" class="btn" style="background:transparent;color:#fff;border-radius:10px;border:1px solid rgba(255,255,255,0.03);padding:6px">
+            <option value="medium">Medium</option>
+            <option value="low">Low</option>
+            <option value="high">High</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="reels-wrap" aria-hidden="false">
+      <div class="reels" id="reels" role="region" aria-label="Game reels">
+        <!-- 5 reels -->
+        <div class="reel" data-index="0" aria-hidden="false"><div class="strip"></div></div>
+        <div class="reel" data-index="1"><div class="strip"></div></div>
+        <div class="reel" data-index="2"><div class="strip"></div></div>
+        <div class="reel" data-index="3"><div class="strip"></div></div>
+        <div class="reel" data-index="4"><div class="strip"></div></div>
+        <!-- Canvas overlay for drawing payline visuals (absolute over reels) -->
+        <canvas id="payline-canvas" class="payline-canvas" aria-hidden="true"></canvas>
+      </div>
+    </div>
+
+    <div class="controls" role="region" aria-label="Controls">
+      <div class="bet-area" aria-hidden="false">
+        <button id="dec" class="btn" aria-label="Decrease bet">−</button>
+        <input id="bet" type="number" value="100" min="10" step="10" aria-label="Bet amount">
+        <button id="inc" class="btn" aria-label="Increase bet">+</button>
+      </div>
+
+      <button id="spin" class="spin-btn" aria-label="Spin (space)"><span id="spin-text">SPIN</span></button>
+      <button id="auto" class="btn" aria-pressed="false" aria-label="Auto spin">AUTO</button>
+    </div>
+
+    <div class="info-row">
+      <div style="display:flex;gap:8px;align-items:center;justify-content:center;width:100%">
+        <div class="small">Last win:</div><div class="stat" id="last-win">0 ₽</div>
+      </div>
+    </div>
+
+    <div class="message" id="message" aria-live="polite">
+      5×5 Enhanced Slot с 25 линиями! Нажмите SPIN или пробел для вращения.
+      Wild ⭐ заменяет, Scatter 🔥 запускает бонус! 🎵 Музыка: создайте папку "audio" и добавьте файл "baobab.mp3"
+    </div>
+  </main>
+
+  <!-- Right panel -->
+  <aside class="side" aria-hidden="false">
+    <div class="small">Session Stats</div>
+    <div class="panel-row"><div class="small">Spins</div><div class="stat" id="total-spins">0</div></div>
+    <div class="panel-row"><div class="small">Total Won</div><div class="stat" id="total-won">0</div></div>
+    <div class="panel-row"><div class="small">Bonus Spins</div><div class="stat" id="bonus-spins">0</div></div>
+    
+    <!-- Side Ad Banner -->
+    <div class="ad-banner-side">
+      <a href="https://rutube.ru/video/be9b5aece2911aecc68fa03942e25bac" target="_blank" rel="noopener noreferrer" style="display:inline-block">
+        <img src="img/ad1.png" alt="Advertisement" onerror="this.style.display='none';this.parentElement.style.display='none'">
+      </a>
+    </div>
+
+    <div style="margin-top:12px">
+      <div class="small">Paytable (× bet) - 5×5 Grid</div>
+      <ul style="padding-left:18px;margin-top:8px;color:var(--muted);font-size:13px">
+        <li><span class="trident-symbol" style="display:inline-block;width:20px;height:20px;background:url('img/kalik11.jpg') center/contain no-repeat;margin-right:4px;vertical-align:middle;"></span> ×6/8/15 (3/4/5)</li>
+        <li><span class="lightning-symbol" style="display:inline-block;width:20px;height:20px;background:url('img/trava.jpg') center/contain no-repeat;margin-right:4px;vertical-align:middle;"></span> ×4/5/8</li>
+        <li><span class="coin-symbol" style="display:inline-block;width:20px;height:20px;background:url('img/par.jpg') center/contain no-repeat;margin-right:4px;vertical-align:middle;"></span> ×3/4/6</li>
+        <li><span class="laurel-symbol" style="display:inline-block;width:20px;height:20px;background:url('img/veip.jpg') center/contain no-repeat;margin-right:4px;vertical-align:middle;"></span> ×2/2.5/4</li>
+        <li><span class="trophy-symbol" style="display:inline-block;width:20px;height:20px;background:url('img/kaif.jpg') center/contain no-repeat;margin-right:4px;vertical-align:middle;"></span> ×3/4/7</li>
+        <li><span class="eagle-symbol" style="display:inline-block;width:20px;height:20px;background:url('img/sigi.jpg') center/contain no-repeat;margin-right:4px;vertical-align:middle;"></span> ×2/2.5/4</li>
+        <li><span class="temple-symbol" style="display:inline-block;width:20px;height:20px;background:url('img/pivo.jpg') center/contain no-repeat;margin-right:4px;vertical-align:middle;"></span> ×6/8/12</li>
+        <li><span class="sword-symbol" style="display:inline-block;width:20px;height:20px;background:url('img/crack.jpg') center/contain no-repeat;margin-right:4px;vertical-align:middle;"></span> ×3/4/6</li>
+        <li><span class="shield-symbol" style="display:inline-block;width:20px;height:20px;background:url('img/ugli11.jpg') center/contain no-repeat;margin-right:4px;vertical-align:middle;"></span> ×2/2.5/4</li>
+        <li><span class="glock-symbol" style="display:inline-block;width:20px;height:20px;background:url('img/glock.jpg') center/contain no-repeat;margin-right:4px;vertical-align:middle;"></span> ×3/4/6</li>
+        <li>Wild (<span class="wild-symbol" style="display:inline-block;width:20px;height:20px;background:url('img/wild.jpg') center/contain no-repeat;margin-right:4px;vertical-align:middle;"></span>) substitutes any symbol</li>
+        <li>Scatter (<span class="scatter-symbol" style="display:inline-block;width:20px;height:20px;background:url('img/bonus.jpg') center/contain no-repeat;margin-right:4px;vertical-align:middle;"></span>) ×5/10/25 (3/4/5)</li>
+        <li>25 Paylines - 5×5 Grid</li>
+      </ul>
+    </div>
+    
+    <div style="margin-top:12px">
+      <div class="small">Big Wins Statistics</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
+        <div style="text-align:center;padding:8px;background:rgba(255,215,0,0.1);border-radius:8px;border:1px solid rgba(255,215,0,0.2)">
+          <div class="small" style="color:var(--muted)">Big Wins</div>
+          <div class="stat" id="big-wins" style="color:#ffd36b">0</div>
+        </div>
+        <div style="text-align:center;padding:8px;background:rgba(124,77,255,0.1);border-radius:8px;border:1px solid rgba(124,77,255,0.2)">
+          <div class="small" style="color:var(--muted)">Mega Wins</div>
+          <div class="stat" id="mega-wins" style="color:#b388ff">0</div>
+        </div>
+        <div style="text-align:center;padding:8px;background:rgba(255,0,110,0.1);border-radius:8px;border:1px solid rgba(255,0,110,0.2);grid-column:1/-1">
+          <div class="small" style="color:var(--muted)">Super Wins</div>
+          <div class="stat" id="super-wins" style="color:#ff4081">0</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+</div>
+
+<!-- Win banner overlay -->
+<div id="win-banner" class="win-banner" aria-live="polite">
+  <div>🎉 ВЫ ВЫИГРАЛИ</div>
+  <div id="win-sum">0 ₽</div>
+</div>
+
+<!-- Confetti canvas for win animations -->
+<canvas id="confetti-canvas" class="confetti-canvas" aria-hidden="true"></canvas>
+
+<!-- Background music -->
+<audio id="background-music" src="audio/baobab.mp3" preload="auto" loop></audio>
+
+<!-- Floating Buy Bonus Button -->
+<div class="floating-bonus-btn" id="floating-bonus-container">
+  <button id="buy-bonus" class="floating-bonus-button">
+    <div class="bonus-icon">🎁</div>
+  </button>
+</div>
+
+<script src="slot-bonus.js"></script>
+</body>
+</html>
